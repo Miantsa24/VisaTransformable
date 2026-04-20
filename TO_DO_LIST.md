@@ -92,7 +92,7 @@ INSERT INTO type_demande(libelle) VALUES ('nouveau_titre'); : nouveau_titre, dup
 INSERT INTO type_visa(libelle) VALUES ('investisseur'), ('travailleur');
 ```
 
-* Insérer documents avec obligatoire TRUE/FALSE (ze tiana fotsiny lo)
+* Insérer documents avec obligatoire TRUE/FALSE 
 
 ---
 
@@ -171,7 +171,7 @@ Créer `DemandeDTO` avec :
 * insertion complète
 * rejet document manquant
 * rejet visa expiré ou inexistant
-* autres erreurs, ...
+* autres erreurs et scenarios possibles, ...
 
 ---
 
@@ -193,6 +193,7 @@ Créer `DemandeDTO` avec :
 
 Créer :
 
+* `index.jsp`
 * `step1-type.jsp`
 * `step2-form.jsp`
 * `step3-typeVisa.jsp`
@@ -201,11 +202,16 @@ Créer :
 
 ---
 
-### 3. Étape 1
+### Etape 0 : `index.jsp`
 
-* Boutons :
+* Page d'accueil + sidebar ou navbar 
+    * menu : Faire une demande de visa long sejour qui affichera l'etape 1
 
-  * Nouveau titre (actif)
+### 3. Étape 1 : `step1-type.jsp`
+
+* Boutons : 
+
+  * Nouveau titre (actif) : redirigera vers etape 2
   * Duplicata (a prevoir juste)
 
 ---
@@ -218,7 +224,7 @@ Créer :
 * passeport
 * visa
 
--> bouton enregistrer : dans base (partie dev 1)
+-> bouton enregistrer qui redirigera vers etape 3 (partie dev 2), insertion des informations dans base (partie dev 1)
 
 ---
 
@@ -229,7 +235,7 @@ Créer :
   * investisseur
   * travailleur
 
-  -> bouton choisir
+  -> bouton choisir : redirigera vers etape 4
 
 ---
 
@@ -244,7 +250,7 @@ Créer :
 ```html
 <input type="checkbox" name="documents" value="id_doc">
 ```
-
+Bouton enregistrer qui fera la soumission si toutes les regles respectees
 ---
 
 ### 7. Étape 5 — Soumission
