@@ -21,7 +21,7 @@
                     Retour à l’accueil
                 </a>
                 <a href="/backoffice/demande/new" style="display:inline-block;padding:12px 18px;border-radius:10px;background:#e2e8f0;color:#0f172a;text-decoration:none;font-weight:600;">
-                    Nouvelle demande
+                    Demande
                 </a>
             </div>
         </div>

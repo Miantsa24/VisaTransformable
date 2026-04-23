@@ -58,11 +58,20 @@ public class PageController {
     private TypeVisaRepository typeVisaRepository;
 
     @GetMapping("/step2-form")
-    public String step2Form(Model model) {
+    public String step2Form(@RequestParam(value = "type", required = false) String type,
+                            Model model,
+                            HttpSession session) {
         java.util.List<SituationFamiliale> situations = situationFamilialeRepository.findAll();
         java.util.List<Nationalite> nationalites = nationaliteRepository.findAll();
         model.addAttribute("situationsFamiliales", situations);
         model.addAttribute("nationalites", nationalites);
+        if (type != null && !type.isBlank()) {
+            String typeDemandeLibelle = normaliserTypeDemande(type);
+            typeDemandeRepository.findByLibelle(typeDemandeLibelle).ifPresent(typeDemande -> {
+                session.setAttribute("currentTypeDemandeId", typeDemande.getId());
+                session.setAttribute("currentTypeDemandeLibelle", typeDemande.getLibelle());
+            });
+        }
         return "step2-form";
     }
 
@@ -198,6 +207,10 @@ public class PageController {
             });
         }
         return "redirect:/step4-documents?type_visa=" + typeVisa;
+    }
+
+    private String normaliserTypeDemande(String type) {
+        return type.trim().toLowerCase().replace(' ', '_');
     }
 
     @GetMapping("/step4-documents")

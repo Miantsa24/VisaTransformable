@@ -19,8 +19,8 @@
                 <a href="/backoffice/demande/new" style="display:inline-block;padding:12px 18px;border-radius:10px;background:#2563eb;color:#fff;text-decoration:none;font-weight:600;">
                     Nouvelle demande
                 </a>
-                <a href="/step1-type" style="display:inline-block;padding:12px 18px;border-radius:10px;background:#e2e8f0;color:#0f172a;text-decoration:none;font-weight:600;">
-                    Démarrer le wizard
+                <a href="/backoffice/demande/liste" style="display:inline-block;padding:12px 18px;border-radius:10px;background:#e2e8f0;color:#0f172a;text-decoration:none;font-weight:600;">
+                    Liste des demandes
                 </a>
             </div>
         </div>

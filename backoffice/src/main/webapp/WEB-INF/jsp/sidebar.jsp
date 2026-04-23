@@ -16,6 +16,11 @@
                     Nouvelle demande
                 </a>
             </li>
+            <li>
+                <a href="/backoffice/demande/liste" style="display:block;padding:10px 12px;border-radius:8px;color:#fff;text-decoration:none;background:rgba(255,255,255,0.06);">
+                    Liste des demandes
+                </a>
+            </li>
         </ul>
     </nav>
 </div>
