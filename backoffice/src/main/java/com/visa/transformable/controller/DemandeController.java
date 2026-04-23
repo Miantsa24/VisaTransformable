@@ -20,6 +20,16 @@ public class DemandeController {
     @Autowired
     private DemandeService demandeService;
 
+    @GetMapping("/new")
+    public String newDemande(HttpSession session) {
+        session.removeAttribute("currentDemandeurId");
+        session.removeAttribute("currentPasseportId");
+        session.removeAttribute("currentVisaId");
+        session.removeAttribute("currentTypeVisa");
+        session.removeAttribute("currentSelectedDocumentIds");
+        return "step1-type";
+    }
+
     @PostMapping
     public String createDemande(@RequestParam(value = "documents", required = false) List<Long> documentsCoches,
                                 HttpSession session) {
