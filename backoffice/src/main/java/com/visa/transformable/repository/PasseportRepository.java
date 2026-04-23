@@ -7,5 +7,5 @@ import java.util.List;
 
 public interface PasseportRepository extends JpaRepository<Passeport, Long> {
     Optional<Passeport> findByNumeroPasseport(String numeroPasseport);
-    List<Passeport> findByIdDemandeur(Long idDemandeur);
+    List<Passeport> findByDemandeurId(Long idDemandeur);
 }
