@@ -1,13 +1,28 @@
 package com.visa.transformable.controller;
 
 import com.visa.transformable.dto.DemandeDTO;
+import com.visa.transformable.model.Nationalite;
+import com.visa.transformable.model.SituationFamiliale;
+import com.visa.transformable.model.TypeVisa;
+import com.visa.transformable.repository.DemandeRepository;
+import com.visa.transformable.repository.DocumentRepository;
+import com.visa.transformable.repository.NationaliteRepository;
+import com.visa.transformable.repository.PasseportRepository;
+import com.visa.transformable.repository.SituationFamilialeRepository;
+import com.visa.transformable.repository.StatutDemandeRepository;
+import com.visa.transformable.repository.TypeDemandeRepository;
+import com.visa.transformable.repository.TypeVisaRepository;
+import com.visa.transformable.repository.DemandeurRepository;
+import com.visa.transformable.repository.VisaRepository;
 import com.visa.transformable.service.DemandeService;
+import com.visa.transformable.service.DemandeurService;
+import com.visa.transformable.service.PasseportService;
+import com.visa.transformable.service.VisaService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.ui.Model;
 import jakarta.servlet.http.HttpSession;
 
@@ -28,40 +43,42 @@ public class PageController {
     }
 
     @Autowired
-    private com.visa.transformable.repository.TypeDemandeRepository typeDemandeRepository;
+    private TypeDemandeRepository typeDemandeRepository;
     @Autowired
-    private com.visa.transformable.repository.StatutDemandeRepository statutDemandeRepository;
+    private StatutDemandeRepository statutDemandeRepository;
     @Autowired
-    private com.visa.transformable.repository.DocumentRepository documentRepository;
+    private DocumentRepository documentRepository;
     @Autowired
-    private com.visa.transformable.repository.DemandeRepository demandeRepository;
+    private DemandeRepository demandeRepository;
     @Autowired
-    private com.visa.transformable.repository.SituationFamilialeRepository situationFamilialeRepository;
+    private SituationFamilialeRepository situationFamilialeRepository;
     @Autowired
-    private com.visa.transformable.repository.NationaliteRepository nationaliteRepository;
+    private NationaliteRepository nationaliteRepository;
+    @Autowired
+    private TypeVisaRepository typeVisaRepository;
 
     @GetMapping("/step2-form")
     public String step2Form(Model model) {
-        java.util.List<com.visa.transformable.model.SituationFamiliale> situations = situationFamilialeRepository.findAll();
-        java.util.List<com.visa.transformable.model.Nationalite> nationalites = nationaliteRepository.findAll();
+        java.util.List<SituationFamiliale> situations = situationFamilialeRepository.findAll();
+        java.util.List<Nationalite> nationalites = nationaliteRepository.findAll();
         model.addAttribute("situationsFamiliales", situations);
         model.addAttribute("nationalites", nationalites);
         return "step2-form";
     }
 
     @Autowired
-    private com.visa.transformable.repository.DemandeurRepository demandeurRepository;
+    private DemandeurRepository demandeurRepository;
     @Autowired
-    private com.visa.transformable.repository.PasseportRepository passeportRepository;
+    private PasseportRepository passeportRepository;
     @Autowired
-    private com.visa.transformable.repository.VisaRepository visaRepository;
+    private VisaRepository visaRepository;
 
     @Autowired
-    private com.visa.transformable.service.DemandeurService demandeurService;
+    private DemandeurService demandeurService;
     @Autowired
-    private com.visa.transformable.service.PasseportService passeportService;
+    private PasseportService passeportService;
     @Autowired
-    private com.visa.transformable.service.VisaService visaService;
+    private VisaService visaService;
 
     @PostMapping("/step3-typeVisa")
     public String enregistrerDemande(
@@ -147,7 +164,7 @@ public class PageController {
             visa.setDateDebut(java.sql.Date.valueOf(date_entree));
         if (date_expiration_visa != null && !date_expiration_visa.isEmpty())
             visa.setDateFin(java.sql.Date.valueOf(date_expiration_visa));
-        visaService.createVisa(visa);
+        visa = visaService.createVisa(visa);
 
         session.setAttribute("currentDemandeurId", demandeur.getId());
         session.setAttribute("currentPasseportId", passeport.getId());
@@ -166,6 +183,20 @@ public class PageController {
         // Tu peux stocker le choix en session ou dans le modèle si besoin
         model.addAttribute("typeVisaChoisi", typeVisa);
         session.setAttribute("currentTypeVisa", typeVisa);
+        Long currentVisaId = (Long) session.getAttribute("currentVisaId");
+        if (currentVisaId != null) {
+            visaRepository.findById(currentVisaId).ifPresent(visa -> {
+                String libelle = typeVisa.trim().toLowerCase();
+                com.visa.transformable.model.TypeVisa typeVisaEntity = typeVisaRepository.findByLibelle(libelle)
+                        .orElseGet(() -> {
+                            com.visa.transformable.model.TypeVisa nouveauTypeVisa = new com.visa.transformable.model.TypeVisa();
+                            nouveauTypeVisa.setLibelle(libelle);
+                            return typeVisaRepository.save(nouveauTypeVisa);
+                        });
+                visa.setTypeVisa(typeVisaEntity);
+                visaRepository.save(visa);
+            });
+        }
         return "redirect:/step4-documents?type_visa=" + typeVisa;
     }
 

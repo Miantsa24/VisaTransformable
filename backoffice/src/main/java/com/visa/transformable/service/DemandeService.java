@@ -32,6 +32,15 @@ public class DemandeService {
 
     @Transactional
     public void createDemande(DemandeDTO dto) {
+        if (dto.getIdDemandeur() == null) {
+            throw new IllegalArgumentException("Demandeur introuvable");
+        }
+        if (dto.getIdVisa() == null) {
+            throw new IllegalArgumentException("Visa introuvable");
+        }
+
+        List<Long> documentsCoches = dto.getDocumentsCoches() == null ? List.of() : dto.getDocumentsCoches();
+
         // 1. Vérifier visa non expiré
         Visa visa = visaRepository.findById(dto.getIdVisa())
                 .orElseThrow(() -> new IllegalArgumentException("Visa introuvable"));
@@ -39,10 +48,22 @@ public class DemandeService {
             throw new IllegalArgumentException("Le visa est expiré");
         }
 
+        String typeVisaLibelle = visa.getTypeVisa() != null ? visa.getTypeVisa().getLibelle() : null;
+        if (typeVisaLibelle == null || typeVisaLibelle.isBlank()) {
+            throw new IllegalArgumentException("Type de visa introuvable");
+        }
+
         // 2. Vérifier documents obligatoires
-        List<Document> docsObligatoires = documentRepository.findByObligatoireTrueAndTypeCible(Document.TypeCible.commun); // Adapter selon besoin
-        if (!dto.getDocumentsCoches().containsAll(
-                docsObligatoires.stream().map(Document::getId).toList())) {
+        List<Document> docsObligatoires = new java.util.ArrayList<>(
+                documentRepository.findByObligatoireTrueAndTypeCible(Document.TypeCible.commun)
+        );
+        if ("investisseur".equalsIgnoreCase(typeVisaLibelle)) {
+            docsObligatoires.addAll(documentRepository.findByObligatoireTrueAndTypeCible(Document.TypeCible.investisseur));
+        } else if ("travailleur".equalsIgnoreCase(typeVisaLibelle)) {
+            docsObligatoires.addAll(documentRepository.findByObligatoireTrueAndTypeCible(Document.TypeCible.travailleur));
+        }
+        List<Long> idsObligatoires = docsObligatoires.stream().map(Document::getId).toList();
+        if (!documentsCoches.containsAll(idsObligatoires)) {
             throw new IllegalArgumentException("Tous les documents obligatoires doivent être cochés");
         }
 
@@ -50,9 +71,9 @@ public class DemandeService {
         Demandeur demandeur = demandeurRepository.findById(dto.getIdDemandeur())
                 .orElseThrow(() -> new IllegalArgumentException("Demandeur introuvable"));
         Passeport passeport = visa.getPasseport();
-if (passeport == null) {
-    throw new IllegalArgumentException("Passeport introuvable");
-}
+        if (passeport == null) {
+            throw new IllegalArgumentException("Passeport introuvable");
+        }
 
         Demande demande = new Demande();
         demande.setDemandeur(demandeur);
@@ -73,7 +94,7 @@ if (passeport == null) {
         demande = demandeRepository.save(demande);
 
         // Créer les DemandeDocument
-        for (Long docId : dto.getDocumentsCoches()) {
+        for (Long docId : documentsCoches.stream().distinct().toList()) {
             Document doc = documentRepository.findById(docId)
                     .orElseThrow(() -> new IllegalArgumentException("Document introuvable"));
             DemandeDocument dd = new DemandeDocument();

@@ -25,7 +25,10 @@ public class DemandeController {
                                 HttpSession session) {
         Long idDemandeur = (Long) session.getAttribute("currentDemandeurId");
         Long idVisa = (Long) session.getAttribute("currentVisaId");
-        List<Long> selectedDocs = documentsCoches != null ? documentsCoches : (List<Long>) session.getAttribute("currentSelectedDocumentIds");
+        List<Long> selectedDocs = (List<Long>) session.getAttribute("currentSelectedDocumentIds");
+        if (selectedDocs == null) {
+            selectedDocs = documentsCoches;
+        }
         if (selectedDocs == null) {
             selectedDocs = new java.util.ArrayList<>();
         }
