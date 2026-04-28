@@ -7,4 +7,5 @@ import java.util.Optional;
 public interface DemandeurRepository extends JpaRepository<Demandeur, Long> {
     Optional<Demandeur> findByEmail(String email);
     Optional<Demandeur> findByTelephone(String telephone);
+    Optional<Demandeur> findByNomAndPrenomsAndDateNaissanceAndLieuNaissance(String nom, String prenoms, java.sql.Date dateNaissance, String lieuNaissance);
 }

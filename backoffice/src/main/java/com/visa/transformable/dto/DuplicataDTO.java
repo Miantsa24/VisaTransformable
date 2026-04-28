@@ -3,21 +3,17 @@ package com.visa.transformable.dto;
 import java.sql.Date;
 import java.util.List;
 
-public class DemandeDTO {
-    // Données du formulaire
+public class DuplicataDTO {
+    private String typePerte;
     private Long idDemandeur;
     private Long idVisa;
-    private Long idTypeDemande;
-    private Date dateDemande;
-    private String observations;
-    // Liste des documents cochés (IDs)
-    private List<Long> documentsCoches;
-
-    // Champs Sprint 2
-    private String typePerte;
     private Long idVisaOrigine;
     private Long idCarteResident;
     private String numeroNouveauPasseport;
+    private Long idTypeDemande;
+    private Date dateDemande;
+    private String observations;
+    private List<Long> documentsCoches;
 
     private String nom;
     private String prenoms;
@@ -38,13 +34,23 @@ public class DemandeDTO {
     private Date dateDebutVisa;
     private Date dateFinVisa;
 
-    public DemandeDTO() {}
+    public String getTypePerte() { return typePerte; }
+    public void setTypePerte(String typePerte) { this.typePerte = typePerte; }
 
     public Long getIdDemandeur() { return idDemandeur; }
     public void setIdDemandeur(Long idDemandeur) { this.idDemandeur = idDemandeur; }
 
     public Long getIdVisa() { return idVisa; }
     public void setIdVisa(Long idVisa) { this.idVisa = idVisa; }
+
+    public Long getIdVisaOrigine() { return idVisaOrigine; }
+    public void setIdVisaOrigine(Long idVisaOrigine) { this.idVisaOrigine = idVisaOrigine; }
+
+    public Long getIdCarteResident() { return idCarteResident; }
+    public void setIdCarteResident(Long idCarteResident) { this.idCarteResident = idCarteResident; }
+
+    public String getNumeroNouveauPasseport() { return numeroNouveauPasseport; }
+    public void setNumeroNouveauPasseport(String numeroNouveauPasseport) { this.numeroNouveauPasseport = numeroNouveauPasseport; }
 
     public Long getIdTypeDemande() { return idTypeDemande; }
     public void setIdTypeDemande(Long idTypeDemande) { this.idTypeDemande = idTypeDemande; }
@@ -57,18 +63,6 @@ public class DemandeDTO {
 
     public List<Long> getDocumentsCoches() { return documentsCoches; }
     public void setDocumentsCoches(List<Long> documentsCoches) { this.documentsCoches = documentsCoches; }
-
-    public String getTypePerte() { return typePerte; }
-    public void setTypePerte(String typePerte) { this.typePerte = typePerte; }
-
-    public Long getIdVisaOrigine() { return idVisaOrigine; }
-    public void setIdVisaOrigine(Long idVisaOrigine) { this.idVisaOrigine = idVisaOrigine; }
-
-    public Long getIdCarteResident() { return idCarteResident; }
-    public void setIdCarteResident(Long idCarteResident) { this.idCarteResident = idCarteResident; }
-
-    public String getNumeroNouveauPasseport() { return numeroNouveauPasseport; }
-    public void setNumeroNouveauPasseport(String numeroNouveauPasseport) { this.numeroNouveauPasseport = numeroNouveauPasseport; }
 
     public String getNom() { return nom; }
     public void setNom(String nom) { this.nom = nom; }

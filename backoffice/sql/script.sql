@@ -20,12 +20,12 @@ CREATE TABLE nationalite (
 
 CREATE TABLE statut_demande (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    libelle VARCHAR(100) NOT NULL
+    libelle VARCHAR(100) NOT NULL UNIQUE
 );
 
 CREATE TABLE type_demande (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    libelle VARCHAR(100) NOT NULL
+    libelle VARCHAR(100) NOT NULL UNIQUE
 );
 
 CREATE TABLE type_visa (
@@ -71,6 +71,20 @@ CREATE TABLE passeport (
 );
 
 -- =========================
+-- CARTE DE RESIDENT
+-- =========================
+
+CREATE TABLE carte_resident (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    id_demandeur INT NOT NULL,
+    numero_carte_resident VARCHAR(50) NOT NULL UNIQUE,
+    date_delivrance DATE,
+    date_expiration DATE,
+
+    FOREIGN KEY (id_demandeur) REFERENCES demandeur(id) ON DELETE CASCADE
+);
+
+-- =========================
 -- VISA (lié à un passeport)
 -- =========================
 
@@ -97,13 +111,20 @@ CREATE TABLE demande (
     id_demandeur INT NOT NULL,
     id_visa INT NOT NULL,
     id_type_demande INT,
+    type_perte ENUM('passeport_perdu', 'carte_resident_perdue') DEFAULT NULL,
+    id_visa_origine INT DEFAULT NULL,
+    id_nouveau_passeport INT DEFAULT NULL,
+    id_carte_resident INT DEFAULT NULL,
     observations TEXT,
     date_traitement DATE,
 
     FOREIGN KEY (id_statut_demande) REFERENCES statut_demande(id),
     FOREIGN KEY (id_demandeur) REFERENCES demandeur(id) ON DELETE CASCADE,
     FOREIGN KEY (id_visa) REFERENCES visa(id),
-    FOREIGN KEY (id_type_demande) REFERENCES type_demande(id)
+    FOREIGN KEY (id_type_demande) REFERENCES type_demande(id),
+    FOREIGN KEY (id_visa_origine) REFERENCES visa(id),
+    FOREIGN KEY (id_nouveau_passeport) REFERENCES passeport(id),
+    FOREIGN KEY (id_carte_resident) REFERENCES carte_resident(id)
 );
 
 -- =========================
