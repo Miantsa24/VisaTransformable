@@ -13,7 +13,7 @@
             </li>
             <li>
                 <a href="/backoffice/demande/new" style="display:block;padding:10px 12px;border-radius:8px;color:#fff;text-decoration:none;background:rgba(59,130,246,0.18);border:1px solid rgba(59,130,246,0.35);">
-                    Nouvelle demande
+                    Demande
                 </a>
             </li>
             <li>

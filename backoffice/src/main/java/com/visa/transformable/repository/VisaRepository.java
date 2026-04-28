@@ -8,4 +8,6 @@ import java.util.Optional;
 public interface VisaRepository extends JpaRepository<Visa, Long> {
     Optional<Visa> findByReference(String reference);
     List<Visa> findByPasseportId(Long idPasseport);
+    Optional<Visa> findByPasseportIdAndReference(Long idPasseport, String reference);
+    Optional<Visa> findByPasseportIdAndDateDebutAndDateFin(Long idPasseport, java.sql.Date dateDebut, java.sql.Date dateFin);
 }

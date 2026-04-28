@@ -19,12 +19,14 @@ INSERT INTO nationalite(libelle) VALUES
 -- Statut demande
 INSERT INTO statut_demande(libelle) VALUES 
   ('demande_creee'), 
-  ('demande_rejetee');
+  ('demande_rejetee'),
+  ('approuvee');
 
 -- Type demande
 INSERT INTO type_demande(libelle) VALUES 
   ('nouveau_titre'), 
-  ('duplicatat');
+  ('duplicata'),
+  ('transfert_visa');
 
 -- Type visa
 INSERT INTO type_visa(libelle) VALUES 
