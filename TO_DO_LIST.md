@@ -390,38 +390,48 @@ Créer ou compléter :
 
 ### 5. Service métier
 
-Créer `DuplicataService` ou étendre `DemandeService` selon le choix d’architecture
+Étendre `DemandeService` avec **DEUX méthodes distinctes** selon le cas :
 
-#### Méthode :
-
-```java
-createDuplicata(DuplicataDTO dto)
-```
-
-ou
+#### Méthode 1 - Personne EXISTANTE :
 
 ```java
-createDemandeSprint2(DemandeDTO dto)
+createDemandeSprint2(DuplicataDTO dto)
 ```
+
+Crée **1 SEULE demande** :
+- Type : duplicata OU transfert_visa (selon typePerte)
+- Statut : demande_creee
+
+#### Méthode 2 - Personne INCONNUE (NEW - À CRÉER) :
+
+```java
+createTwoDemandes(DuplicataDTO dto, List<Long> documentsCoches, String typePerte)
+```
+
+Crée **2 demandes** après validation documents :
+- Demande 1 : type=nouveau_titre, statut=approuvee
+- Demande 2 : type=duplicata/transfert, statut=demande_creee
+- DemandeDocuments : PARTAGÉS
 
 ---
 
 ### Règles métier
 
-1. Déterminer le cas :
+**Cas 1 : Personne EXISTANTE** (prefill ≠ null)
+1. GET /prefill retourne idDemandeur
+2. Appeler `createDemandeSprint2(DuplicataDTO)`
+3. Crée 1 seule demande : duplicata OU transfert_visa
+4. Statut : demande_creee
+5. Confirmation directe
 
-  * passeport perdu
-  * carte de résident perdue
-2. Si la personne existe déjà, charger et préremplir ses données
-3. Si la personne n’existe pas, créer l’ensemble des informations from scratch
-4. Si passeport perdu :
-
-  * saisir uniquement le nouveau numéro de passeport
-  * rattacher le visa au nouveau passeport
-5. Si carte de résident perdue :
-
-  * enregistrer la demande de duplicata
-6. Affecter directement le statut `approuvee`
+**Cas 2 : Personne INCONNUE** (prefill = 404)
+1. Formulaire vide + Step3 (type visa) + Step4 (documents obligatoires)
+2. POST /backoffice/demande détecte `sprint2.typePerte` en session
+3. Appeler `createTwoDemandes(DuplicataDTO, List<Long> documentsCoches, typePerte)`
+4. Crée 2 demandes liées :
+   - Demande 1 : nouveau_titre + approuvee
+   - Demande 2 : duplicata/transfert + demande_creee
+5. DemandeDocuments : partagés entre les 2
 
 ---
 
@@ -438,21 +448,60 @@ Créer un DTO dédié au sprint 2 avec :
 
 ### 7. Contrôleur
 
-```java
-@PostMapping("/backoffice/sprint2/duplicata")
+#### Endpoint 1 : `@PostMapping("/backoffice/sprint2/duplicata")`
+
+**Gère DEUX cas distincts** :
+
+```
+if (dto.getIdDemandeur() != null) {
+  // Cas 1 : Personne EXISTANTE (vient du prefill)
+  → Appeler : createDemandeSprint2(dto)
+  → Créer 1 demande
+  → Rediriger : sprint2-confirmation.jsp
+} else {
+  // Cas 2 : Personne INCONNUE (prefill = 404)
+  → Sauver en session : sprint2.dto, sprint2.typePerte
+  → Rediriger : /step3-typeVisa (réutiliser Sprint 1)
+}
 ```
 
-et endpoints de lecture pour préremplissage si besoin
+#### Endpoint 2 : Modification `@PostMapping("/backoffice/demande")`
+
+**Détecte si c'est Sprint 2** :
+
+```
+if (session.getAttribute("sprint2.typePerte") != null) {
+  // C'est Sprint 2 personne INCONNUE (après Step3 + Step4)
+  → Appeler : createTwoDemandes(dto, documentsCoches, typePerte)
+  → Créer 2 demandes
+  → Nettoyer session
+  → Rediriger : sprint2-confirmation.jsp
+} else {
+  // Sprint 1 classique
+  → Appeler : createDemande(dto)
+}
+```
 
 ---
 
-### 8. Tests
+### 8. Tests - Tester les 2 MÉTHODES
 
-* personne existante → préremplissage OK
-* personne inconnue → création from scratch OK
-* passeport perdu → transfert vers nouveau passeport
-* carte de résident perdue → duplicata enregistré
-* statut initial = `approuvee`
+#### Test 1 : `createDemandeSprint2()` - Personne EXISTANTE
+- Input : DuplicataDTO avec `idDemandeur ≠ null`
+- Output : 1 demande créée
+- Vérifier :
+  - Type = duplicata OU transfert_visa (selon typePerte)
+  - Statut = demande_creee
+  - Documents = optionnels
+
+#### Test 2 : `createTwoDemandes()` - Personne INCONNUE
+- Input : DuplicataDTO avec `idDemandeur = null`, List<Long> documentsCoches, typePerte
+- Output : 2 demandes créées
+- Vérifier :
+  - Demande 1 : type=nouveau_titre, statut=approuvee
+  - Demande 2 : type=duplicata/transfert, statut=demande_creee
+  - DemandeDocuments : PARTAGÉS (même documents pour les 2)
+  - Nouveau passeport (si typePerte=passeport_perdu)
 
 ---
 
@@ -470,79 +519,64 @@ et endpoints de lecture pour préremplissage si besoin
 
 ---
 
-### 2. Structure JSP à mettre dans `main/webapp/WEB-INF/jsp`
+### 2. Structure JSP - NOUVEAU FLUX INTÉGRÉ ⭐
 
-Créer ou compléter :
+**Modifier** : `step1-type.jsp` (ajouter 2 nouveaux boutons)  
+**Créer** : `sprint2-form.jsp` (recherche + formulaire)  
+**Créer** : `sprint2-confirmation.jsp` (confirmation)  
 
-* `sprint2-index.jsp`
-* `sprint2-choice.jsp`
-* `sprint2-form.jsp`
-* `sprint2-confirmation.jsp`
-
----
-
-### Étape 0 : entrée sprint 2
-
-* Page d’accueil dédiée au sprint 2 ou menu dans la sidebar
-* Lancer le flux duplicata / transfert de visa
+⚠️ **NE PAS créer** : sprint2-index.jsp, sprint2-choice.jsp
 
 ---
 
-### Étape 1 : choix du cas
+### Étape 0 : INTÉGRATION À STEP1-TYPE.JSP ⭐
 
-* Boutons ou cartes :
-
-  * Passeport perdu
-  * Carte de résident perdue
+Modifier `step1-type.jsp` pour ajouter 2 nouveaux boutons aux 3 existants
 
 ---
 
-### Étape 2 : formulaire
+### Étape 1 : RECHERCHE + PRÉREMPLISSAGE ⭐
 
-* Préremplir les données si la personne existe déjà
-* Permettre la saisie complète si aucune donnée antérieure n’existe
-* Afficher uniquement le champ supplémentaire utile en cas de passeport perdu : nouveau numéro de passeport
+Page `sprint2-form.jsp` avec 2 sections :
+
+**Section 1 : Recherche** - 4 champs optionnels (email, tel, num passeport, ref visa) + AJAX GET /prefill  
+**Section 2 : Formulaire** - 2 blocs (etat civil et visa ) + Bloc nouveau passeport (si transfert) | 3 blocs (etat civil et visa + passeport) : editable si duplicata
+---
+
+### Étape 2 : BRANCHEMENT POST /backoffice/sprint2/duplicata ⭐
+
+- Si idDemandeur ≠ null : créer 1 demande + confirmation
+- Si idDemandeur = null : créer Demandeur + rediriger Step3 → Step4 → 2 demandes
 
 ---
 
-### Étape 3 : confirmation
+### Étape 3 : STEP3 + STEP4 (si personne inconnue) ⭐
 
-* Résumer le cas choisi
-* Résumer les données préremplies ou saisies
-* Afficher le statut final `approuvee`
+**NE réutiliser QUE si** : `sprint2.typePerte != null` (personne inconnue)
 
----
-
-### 4. Navigation wizard
-
-* session ou hidden inputs
-
----
-
-### 5. Gestion erreurs
-
-* personne introuvable au moment du préremplissage
-* données manquantes si saisie from scratch
-* numéro de passeport manquant en cas de passeport perdu
+**Logique** :
+1. Pages Sprint 1 réutilisées (`step3-typeVisa.jsp`, `step4-documents.jsp`)
+2. MAIS en arrière-plan :
+   - Session contient `sprint2.dto` + `sprint2.typePerte`
+   - Validation documents obligatoires (même que Sprint 1)
+3. POST /backoffice/demande détecte Sprint 2 en session
+4. Appelle `createTwoDemandes()` → crée Demande 1 (approuvee) + Demande 2 (demande_creee)
+5. **Même DemandeDocuments pour les 2 demandes** (audit trail)
 
 ---
 
-### 6. Contrôleur
+### 4. CONFIRMATION (sprint2-confirmation.jsp) ⭐
 
-```java
-@GetMapping("/backoffice/sprint2/duplicata/new")
-```
+Afficher cas, résumé, statut(s) final(aux)
 
 ---
 
-### 7. Commit & PR
+### 5. Controllers - Endpoints
 
  * PR vers `main`
 
 ---
 
-==============================================================================================
-==============================================================================================
 
 # 📌 Tâches pour Sprint 3
 
@@ -602,6 +636,10 @@ INSERT INTO statut_demande(libelle) VALUES ('visa_creé');
 | Bouton "Approuver" | Visible uniquement quand statut = `demande_creee` |
 | Approbation finale | Statut `visa_creé` créé en base, redirection vers `success.jsp` |
 | success.jsp | Affiche bien le visa et la carte de résident délivrés |
+Ajouter/modifier dans `PageController.java` :
+- `@PostMapping("/backoffice/sprint2/duplicata/form")`
+- Modifier `@PostMapping("/backoffice/sprint2/duplicata")`
+- Modifier `@PostMapping("/backoffice/demande")` (détecter Sprint 2)
 
 ---
 

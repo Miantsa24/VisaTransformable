@@ -47,6 +47,17 @@ public class Demandeur {
     @Column(name = "updated_at", insertable = false)
     private java.sql.Timestamp updatedAt;
 
+    @OneToMany(mappedBy = "demandeur", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+private java.util.List<Passeport> passeports;
+
+public java.util.List<Passeport> getPasseports() {
+    return passeports;
+}
+
+public void setPasseports(java.util.List<Passeport> passeports) {
+    this.passeports = passeports;
+}
+
     // Getters and Setters
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }

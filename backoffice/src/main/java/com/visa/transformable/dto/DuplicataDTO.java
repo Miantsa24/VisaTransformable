@@ -14,6 +14,10 @@ public class DuplicataDTO {
     private Date dateDemande;
     private String observations;
     private List<Long> documentsCoches;
+    private String typeVisa;
+    private Date dateDelivranceNouveauPasseport;
+private Date dateExpirationNouveauPasseport;
+private String paysDelivranceNouveauPasseport;
 
     private String nom;
     private String prenoms;
@@ -34,6 +38,30 @@ public class DuplicataDTO {
     private Date dateDebutVisa;
     private Date dateFinVisa;
 
+
+    public Date getDateDelivranceNouveauPasseport() {
+    return dateDelivranceNouveauPasseport;
+}
+
+public void setDateDelivranceNouveauPasseport(Date dateDelivranceNouveauPasseport) {
+    this.dateDelivranceNouveauPasseport = dateDelivranceNouveauPasseport;
+}
+
+public Date getDateExpirationNouveauPasseport() {
+    return dateExpirationNouveauPasseport;
+}
+
+public void setDateExpirationNouveauPasseport(Date dateExpirationNouveauPasseport) {
+    this.dateExpirationNouveauPasseport = dateExpirationNouveauPasseport;
+}
+
+public String getPaysDelivranceNouveauPasseport() {
+    return paysDelivranceNouveauPasseport;
+}
+
+public void setPaysDelivranceNouveauPasseport(String paysDelivranceNouveauPasseport) {
+    this.paysDelivranceNouveauPasseport = paysDelivranceNouveauPasseport;
+}
     public String getTypePerte() { return typePerte; }
     public void setTypePerte(String typePerte) { this.typePerte = typePerte; }
 
@@ -111,4 +139,7 @@ public class DuplicataDTO {
 
     public Date getDateFinVisa() { return dateFinVisa; }
     public void setDateFinVisa(Date dateFinVisa) { this.dateFinVisa = dateFinVisa; }
+
+    public String getTypeVisa() { return typeVisa; }
+    public void setTypeVisa(String typeVisa) { this.typeVisa = typeVisa; }
 }
