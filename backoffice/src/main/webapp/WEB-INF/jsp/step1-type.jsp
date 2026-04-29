@@ -23,9 +23,17 @@
                     </button>
                 </form>
 
-                <button type="button" disabled style="width:100%;padding:18px 16px;border:1px dashed #cbd5e1;border-radius:12px;background:#f8fafc;color:#94a3b8;font-size:16px;font-weight:600;cursor:not-allowed;">
-                    Duplicata (bientôt)
-                </button>
+                <form action="/sprint2-form" method="get" style="margin:0;">
+                    <button type="submit" name="type" value="duplicata" style="width:100%;padding:18px 16px;border:none;border-radius:12px;background:#2563eb;color:#fff;font-size:16px;font-weight:600;cursor:pointer;">
+                        Duplicata
+                    </button>
+                </form>
+
+                <form action="/sprint2-form" method="get" style="margin:0;">
+                    <button type="submit" name="type" value="transfert_visa" style="width:100%;padding:18px 16px;border:none;border-radius:12px;background:#2563eb;color:#fff;font-size:16px;font-weight:600;cursor:pointer;">
+                        Transfert de visa
+                    </button>
+                </form>
             </div>
         </div>
     </div>
