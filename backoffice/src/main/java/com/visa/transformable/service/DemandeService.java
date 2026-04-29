@@ -9,7 +9,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.sql.Date;
+import java.sql.Timestamp;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -114,6 +116,138 @@ public class DemandeService {
             dd.setFourni(true);
             demandeDocumentRepository.save(dd);
         }
+    }
+
+    @Transactional
+    public Demande updateDemande(Long demandeId, DemandeDTO dto) {
+        Demande demande = demandeRepository.findById(demandeId)
+                .orElseThrow(() -> new IllegalArgumentException("Demande introuvable"));
+
+        Demandeur demandeur = demande.getDemandeur();
+        if (demandeur == null) {
+            throw new IllegalArgumentException("Demandeur introuvable");
+        }
+
+        if (dto.getNom() == null || dto.getNom().isBlank()) {
+            throw new IllegalArgumentException("Nom obligatoire");
+        }
+        if (dto.getPrenoms() == null || dto.getPrenoms().isBlank()) {
+            throw new IllegalArgumentException("Prénoms obligatoires");
+        }
+        if (dto.getDateNaissance() == null) {
+            throw new IllegalArgumentException("Date de naissance obligatoire");
+        }
+        if (dto.getLieuNaissance() == null || dto.getLieuNaissance().isBlank()) {
+            throw new IllegalArgumentException("Lieu de naissance obligatoire");
+        }
+        if (dto.getTelephone() == null || dto.getTelephone().isBlank()) {
+            throw new IllegalArgumentException("Téléphone obligatoire");
+        }
+        if (dto.getEmail() == null || dto.getEmail().isBlank()) {
+            throw new IllegalArgumentException("Email obligatoire");
+        }
+
+        demandeur.setNom(dto.getNom());
+        demandeur.setPrenoms(dto.getPrenoms());
+        demandeur.setDateNaissance(dto.getDateNaissance());
+        demandeur.setLieuNaissance(dto.getLieuNaissance());
+        demandeur.setTelephone(dto.getTelephone());
+        demandeur.setEmail(dto.getEmail());
+        demandeur.setAdresse(dto.getAdresse());
+        if (dto.getIdSituationFamiliale() != null) {
+            demandeur.setSituationFamiliale(situationFamilialeRepository.findById(dto.getIdSituationFamiliale())
+                    .orElseThrow(() -> new IllegalArgumentException("Situation familiale introuvable")));
+        }
+        if (dto.getIdNationalite() != null) {
+            demandeur.setNationalite(nationaliteRepository.findById(dto.getIdNationalite())
+                    .orElseThrow(() -> new IllegalArgumentException("Nationalité introuvable")));
+        }
+        demandeur = demandeurRepository.save(demandeur);
+
+        Visa visa = demande.getVisa();
+        if (visa == null) {
+            throw new IllegalArgumentException("Visa introuvable");
+        }
+        Passeport passeport = visa.getPasseport();
+        if (passeport == null) {
+            throw new IllegalArgumentException("Passeport introuvable");
+        }
+
+        if (dto.getNumeroPasseport() == null || dto.getNumeroPasseport().isBlank()) {
+            throw new IllegalArgumentException("Numéro de passeport obligatoire");
+        }
+        if (dto.getReferenceVisa() == null || dto.getReferenceVisa().isBlank()) {
+            throw new IllegalArgumentException("Référence du visa obligatoire");
+        }
+
+        passeport.setNumeroPasseport(dto.getNumeroPasseport());
+        passeport.setDateDelivrance(dto.getDateDelivrancePasseport());
+        passeport.setDateExpiration(dto.getDateExpirationPasseport());
+        passeport.setPaysDelivrance(dto.getPaysDelivrancePasseport());
+        passeport = passeportRepository.save(passeport);
+
+        visa.setReference(dto.getReferenceVisa());
+        visa.setDateDebut(dto.getDateDebutVisa());
+        visa.setDateFin(dto.getDateFinVisa());
+        visa.setPasseport(passeport);
+        if (dto.getTypeVisa() != null && !dto.getTypeVisa().isBlank()) {
+            visa.setTypeVisa(typeVisaRepository.findByLibelle(dto.getTypeVisa())
+                    .orElseThrow(() -> new IllegalArgumentException("Type de visa introuvable")));
+        }
+        visa = visaRepository.save(visa);
+
+        demande.setDemandeur(demandeur);
+        demande.setVisa(visa);
+        demande.setDateDemande(dto.getDateDemande() != null ? dto.getDateDemande() : demande.getDateDemande());
+        demande.setObservations(dto.getObservations());
+        demande = demandeRepository.save(demande);
+
+        List<Long> existingDocumentIds = demandeDocumentRepository.findByDemandeId(demandeId).stream()
+                .map(dd -> dd.getDocument().getId())
+                .toList();
+        List<Long> selectedDocumentIds = dto.getDocumentsCoches() == null ? List.of() : dto.getDocumentsCoches();
+        java.util.Set<Long> mergedDocumentIds = new java.util.LinkedHashSet<>(existingDocumentIds);
+        mergedDocumentIds.addAll(selectedDocumentIds);
+
+        String typeVisaLibelle = visa.getTypeVisa() != null ? visa.getTypeVisa().getLibelle() : null;
+        if (typeVisaLibelle == null || typeVisaLibelle.isBlank()) {
+            throw new IllegalArgumentException("Type de visa introuvable");
+        }
+        List<Document> docsObligatoires = new java.util.ArrayList<>(
+                documentRepository.findByObligatoireTrueAndTypeCible(Document.TypeCible.commun)
+        );
+        if ("investisseur".equalsIgnoreCase(typeVisaLibelle)) {
+            docsObligatoires.addAll(documentRepository.findByObligatoireTrueAndTypeCible(Document.TypeCible.investisseur));
+        } else if ("travailleur".equalsIgnoreCase(typeVisaLibelle)) {
+            docsObligatoires.addAll(documentRepository.findByObligatoireTrueAndTypeCible(Document.TypeCible.travailleur));
+        }
+        List<Long> idsObligatoires = docsObligatoires.stream().map(Document::getId).toList();
+        if (!mergedDocumentIds.containsAll(idsObligatoires)) {
+            throw new IllegalArgumentException("Tous les documents obligatoires doivent être cochés");
+        }
+
+        for (Long documentId : mergedDocumentIds) {
+            if (!demandeDocumentRepository.existsByDemandeIdAndDocumentId(demandeId, documentId)) {
+                Document doc = documentRepository.findById(documentId)
+                        .orElseThrow(() -> new IllegalArgumentException("Document introuvable"));
+                DemandeDocument demandeDocument = new DemandeDocument();
+                demandeDocument.setDemande(demande);
+                demandeDocument.setDocument(doc);
+                demandeDocument.setFourni(true);
+                demandeDocumentRepository.save(demandeDocument);
+            }
+        }
+
+        histoStatutDemandeRepository.save(createHistorique(
+                demande,
+                demande.getStatutDemande(),
+                "Modification des informations de la demande",
+                dto.getDateModification() != null
+                        ? Timestamp.valueOf(dto.getDateModification().toLocalDate().atStartOfDay())
+                        : Timestamp.valueOf(LocalDateTime.now())
+        ));
+
+        return demande;
     }
 
     @Transactional
@@ -418,10 +552,15 @@ nouveauPasseport.setPaysDelivrance(dto.getPaysDelivranceNouveauPasseport());
     }
 
     private HistoStatutDemande createHistorique(Demande demande, StatutDemande statut, String commentaire) {
+        return createHistorique(demande, statut, commentaire, Timestamp.valueOf(LocalDateTime.now()));
+    }
+
+    private HistoStatutDemande createHistorique(Demande demande, StatutDemande statut, String commentaire, Timestamp dateChangement) {
         HistoStatutDemande histo = new HistoStatutDemande();
         histo.setDemande(demande);
         histo.setStatutDemande(statut);
         histo.setCommentaire(commentaire);
+        histo.setDateChangement(dateChangement);
         return histo;
     }
 }

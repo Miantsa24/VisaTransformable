@@ -115,10 +115,9 @@ public class PageController {
             @RequestParam(required = false) String date_entree,
             @RequestParam(required = false) String lieu_entree,
             @RequestParam(required = false) String date_expiration_visa,
-            @RequestParam(required = false) String type_visa,
             Model model,
             HttpSession session,
-        @RequestParam("type_visa") String typeVisa) {
+            @RequestParam(value = "type_visa", required = false) String typeVisa) {
 
         if (session.getAttribute("sprint2.typePerte") != null) {
 
@@ -129,14 +128,14 @@ public class PageController {
         }
 
         // ✅ stocker type visa
-        session.setAttribute("currentTypeVisa", type_visa);
+        session.setAttribute("currentTypeVisa", typeVisa);
 
         // ✅ mettre à jour DTO
-        dto.setTypeVisa(type_visa);
+        dto.setTypeVisa(typeVisa);
         session.setAttribute("sprint2.dto", dto);
 
         // ✅ redirection correcte
-        return "redirect:/step4-documents?type_visa=" + type_visa;
+        return "redirect:/step4-documents?type_visa=" + typeVisa;
     }
         StringBuilder erreurs = new StringBuilder();
         // Vérification non-nullité/non-vacuité

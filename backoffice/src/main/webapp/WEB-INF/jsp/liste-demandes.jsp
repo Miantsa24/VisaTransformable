@@ -24,6 +24,7 @@
                             <th style="text-align:left;padding:12px;border-bottom:1px solid #e2e8f0;">Type de visa</th>
                             <th style="text-align:left;padding:12px;border-bottom:1px solid #e2e8f0;">Visa</th>
                             <th style="text-align:left;padding:12px;border-bottom:1px solid #e2e8f0;">Passeport</th>
+                            <th style="text-align:left;padding:12px;border-bottom:1px solid #e2e8f0;">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -36,6 +37,10 @@
                                 <td style="padding:12px;border-bottom:1px solid #e2e8f0;">${d.visa.typeVisa.libelle}</td>
                                 <td style="padding:12px;border-bottom:1px solid #e2e8f0;">${d.visa.reference}</td>
                                 <td style="padding:12px;border-bottom:1px solid #e2e8f0;">${d.visa.passeport.numeroPasseport}</td>
+                                <td style="padding:12px;border-bottom:1px solid #e2e8f0;">
+                                    <a href="/backoffice/demande/${d.id}/modifier" style="display:inline-block;padding:8px 12px;border-radius:8px;background:#2563eb;color:#fff;text-decoration:none;font-weight:600;">Modifier</a>
+                                    <a href="/backoffice/demande/${d.id}/historique" style="display:inline-block;padding:8px 12px;border-radius:8px;background:#0f172a;color:#fff;text-decoration:none;font-weight:600;margin-left:8px;">Voir</a>
+                                </td>
                             </tr>
                         </c:forEach>
                     </tbody>
