@@ -25,6 +25,17 @@ public class Passeport {
     @Column(name = "pays_delivrance", length = 100)
     private String paysDelivrance;
 
+    @OneToMany(mappedBy = "passeport", cascade = CascadeType.ALL)
+private java.util.List<Visa> visas;
+
+public java.util.List<Visa> getVisas() {
+    return visas;
+}
+
+public void setVisas(java.util.List<Visa> visas) {
+    this.visas = visas;
+}
+
     // Getters and Setters
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }

@@ -2,7 +2,7 @@
 echo Resetting MySQL database 'visa_db'...
 
 set MYSQL_USER=root
-set MYSQL_PASS=
+set MYSQL_PASS=root
 set MYSQL_PATH="C:\xampp\mysql\bin\mysql.exe"
 
 if not exist %MYSQL_PATH% (

@@ -1,6 +1,7 @@
 package com.visa.transformable.controller;
 
 import com.visa.transformable.dto.DemandeDTO;
+import com.visa.transformable.dto.DuplicataDTO;
 import com.visa.transformable.model.Nationalite;
 import com.visa.transformable.model.SituationFamiliale;
 import com.visa.transformable.model.TypeVisa;
@@ -13,6 +14,7 @@ import com.visa.transformable.repository.StatutDemandeRepository;
 import com.visa.transformable.repository.TypeDemandeRepository;
 import com.visa.transformable.repository.TypeVisaRepository;
 import com.visa.transformable.repository.DemandeurRepository;
+import com.visa.transformable.repository.CarteResidentRepository;
 import com.visa.transformable.repository.VisaRepository;
 import com.visa.transformable.service.DemandeService;
 import com.visa.transformable.service.DemandeurService;
@@ -23,8 +25,12 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpStatus;
 import org.springframework.ui.Model;
 import jakarta.servlet.http.HttpSession;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Controller
 public class PageController {
@@ -109,8 +115,29 @@ public class PageController {
             @RequestParam(required = false) String date_entree,
             @RequestParam(required = false) String lieu_entree,
             @RequestParam(required = false) String date_expiration_visa,
+            @RequestParam(required = false) String type_visa,
             Model model,
-            HttpSession session) {
+            HttpSession session,
+        @RequestParam("type_visa") String typeVisa) {
+
+        if (session.getAttribute("sprint2.typePerte") != null) {
+
+        DuplicataDTO dto = (DuplicataDTO) session.getAttribute("sprint2.dto");
+
+        if (dto == null) {
+            return "redirect:/step1-type?error=session_expired";
+        }
+
+        // ✅ stocker type visa
+        session.setAttribute("currentTypeVisa", type_visa);
+
+        // ✅ mettre à jour DTO
+        dto.setTypeVisa(type_visa);
+        session.setAttribute("sprint2.dto", dto);
+
+        // ✅ redirection correcte
+        return "redirect:/step4-documents?type_visa=" + type_visa;
+    }
         StringBuilder erreurs = new StringBuilder();
         // Vérification non-nullité/non-vacuité
         if (nom.isEmpty()) erreurs.append("Nom obligatoire. ");
@@ -328,5 +355,226 @@ public class PageController {
         return "Visa pour " + typeVisa.substring(0, 1).toUpperCase() + typeVisa.substring(1).toLowerCase();
     }
 
+    // ==================== SPRINT 2 ENDPOINTS ====================
+
+    @Autowired
+    private CarteResidentRepository carteResidentRepository;
+
+    /**
+     * GET /sprint2-form - Afficher le formulaire Sprint 2 avec recherche + préremplissage
+     */
+    @GetMapping("/sprint2-form")
+    public String sprint2Form(@RequestParam(value = "type", required = false) String type,
+                             Model model,
+                             HttpSession session) {
+        java.util.List<SituationFamiliale> situations = situationFamilialeRepository.findAll();
+        java.util.List<Nationalite> nationalites = nationaliteRepository.findAll();
+        model.addAttribute("situationsFamiliales", situations);
+        model.addAttribute("nationalites", nationalites);
+        // Nettoyer les attributs Sprint 2 de session
+        session.removeAttribute("sprint2.dto");
+        session.removeAttribute("sprint2.typePerte");
+        return "sprint2-form";
+    }
+
+    /**
+     * GET /prefill - AJAX GET pour rechercher une personne existante
+     * Retourne DuplicataDTO avec préremplissage OU 404 si non trouvée
+     */
+    @GetMapping("/prefill")
+    @ResponseBody
+    public ResponseEntity<DuplicataDTO> prefill(
+            @RequestParam(value = "email", required = false) String email,
+            @RequestParam(value = "telephone", required = false) String telephone,
+            @RequestParam(value = "numeroPasseport", required = false) String numeroPasseport,
+            @RequestParam(value = "referenceVisa", required = false) String referenceVisa) {
+
+        com.visa.transformable.model.Demandeur demandeur = null;
+
+        // Chercher par email
+        if (email != null && !email.isBlank()) {
+            demandeur = demandeurRepository.findByEmail(email).orElse(null);
+        }
+        // Chercher par téléphone si pas trouvé
+        if (demandeur == null && telephone != null && !telephone.isBlank()) {
+            demandeur = demandeurRepository.findByTelephone(telephone).orElse(null);
+        }
+        // Chercher par passeport si pas trouvé
+        if (demandeur == null && numeroPasseport != null && !numeroPasseport.isBlank()) {
+            var passeport = passeportRepository.findByNumeroPasseport(numeroPasseport);
+            if (passeport.isPresent()) {
+                demandeur = passeport.get().getDemandeur();
+            }
+        }
+        // Chercher par visa si pas trouvé
+        if (demandeur == null && referenceVisa != null && !referenceVisa.isBlank()) {
+            var visa = visaRepository.findByReference(referenceVisa);
+            if (visa.isPresent() && visa.get().getPasseport() != null) {
+                demandeur = visa.get().getPasseport().getDemandeur();
+            }
+        }
+
+        // Personne non trouvée
+        if (demandeur == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
+
+        // Personne trouvée - Construire DuplicataDTO
+        DuplicataDTO dto = new DuplicataDTO();
+        dto.setIdDemandeur(demandeur.getId());
+        dto.setNom(demandeur.getNom());
+        dto.setPrenoms(demandeur.getPrenoms());
+        dto.setDateNaissance(demandeur.getDateNaissance());
+        dto.setLieuNaissance(demandeur.getLieuNaissance());
+        dto.setTelephone(demandeur.getTelephone());
+        dto.setEmail(demandeur.getEmail());
+        dto.setAdresse(demandeur.getAdresse());
+        if (demandeur.getSituationFamiliale() != null) {
+            dto.setIdSituationFamiliale(demandeur.getSituationFamiliale().getId());
+        }
+        if (demandeur.getNationalite() != null) {
+            dto.setIdNationalite(demandeur.getNationalite().getId());
+        }
+
+        // Récupérer passeport et visa
+        var passeports = demandeur.getPasseports();
+        if (!passeports.isEmpty()) {
+            com.visa.transformable.model.Passeport passeport = passeports.get(0);
+            dto.setNumeroPasseport(passeport.getNumeroPasseport());
+            dto.setDateDelivrancePasseport(passeport.getDateDelivrance());
+            dto.setDateExpirationPasseport(passeport.getDateExpiration());
+            dto.setPaysDelivrancePasseport(passeport.getPaysDelivrance());
+
+            // Récupérer visa
+            var visas = passeport.getVisas();
+            if (!visas.isEmpty()) {
+                com.visa.transformable.model.Visa visa = visas.get(0);
+                dto.setReferenceVisa(visa.getReference());
+                dto.setDateDebutVisa(visa.getDateDebut());
+                dto.setDateFinVisa(visa.getDateFin());
+                dto.setIdVisa(visa.getId());
+            }
+        }
+
+        return ResponseEntity.ok(dto);
+    }
+
+    /**
+     * POST /sprint2/duplicata - Soumettre le formulaire Sprint 2
+     * Branchement selon idDemandeur :
+     * - Si ≠ null : créer 1 demande + confirmation
+     * - Si = null : créer Demandeur + sauver en session + rediriger Step3
+     */
+    @PostMapping("/sprint2/duplicata")
+    public String sprint2Duplicata(
+            @RequestParam(value = "typePerte") String typePerte,
+            @RequestParam(value = "idDemandeur", required = false) Long idDemandeur,
+            @RequestParam(value = "nom") String nom,
+            @RequestParam(value = "prenoms") String prenoms,
+            @RequestParam(value = "dateNaissance") String dateNaissance,
+            @RequestParam(value = "lieuNaissance") String lieuNaissance,
+            @RequestParam(value = "idSituationFamiliale", required = false) Long idSituationFamiliale,
+            @RequestParam(value = "idNationalite", required = false) Long idNationalite,
+            @RequestParam(value = "adresse", required = false) String adresse,
+            @RequestParam(value = "email") String email,
+            @RequestParam(value = "telephone") String telephone,
+            @RequestParam(value = "numeroPasseport") String numeroPasseport,
+            @RequestParam(value = "dateDelivrancePasseport", required = false) String dateDelivrancePasseport,
+            @RequestParam(value = "dateExpirationPasseport", required = false) String dateExpirationPasseport,
+            @RequestParam(value = "paysDelivrancePasseport", required = false) String paysDelivrancePasseport,
+            @RequestParam(value = "referenceVisa") String referenceVisa,
+            @RequestParam(value = "dateDebutVisa", required = false) String dateDebutVisa,
+            @RequestParam(value = "dateFinVisa", required = false) String dateFinVisa,
+            @RequestParam(value = "numeroNouveauPasseport", required = false) String numeroNouveauPasseport,
+            @RequestParam(value = "dateDelivranceNouveauPasseport", required = false) String dateDelivranceNouveauPasseport,
+            @RequestParam(value = "dateExpirationNouveauPasseport", required = false) String dateExpirationNouveauPasseport,
+            @RequestParam(value = "paysDelivranceNouveauPasseport", required = false) String paysDelivranceNouveauPasseport,
+            @RequestParam(value = "idCarteResident", required = false) Long idCarteResident,
+            Model model,
+            HttpSession session) {
+
+        try {
+            // Construire DuplicataDTO
+            DuplicataDTO dto = new DuplicataDTO();
+            dto.setIdDemandeur(idDemandeur);
+            dto.setTypePerte(typePerte);
+            dto.setNom(nom);
+            dto.setPrenoms(prenoms);
+            if (dateNaissance != null && !dateNaissance.isBlank()) {
+                dto.setDateNaissance(java.sql.Date.valueOf(dateNaissance));
+            }
+            dto.setLieuNaissance(lieuNaissance);
+            dto.setIdSituationFamiliale(idSituationFamiliale);
+            dto.setIdNationalite(idNationalite);
+            dto.setAdresse(adresse);
+            dto.setEmail(email);
+            dto.setTelephone(telephone);
+            dto.setNumeroPasseport(numeroPasseport);
+            if ("passeport_perdu".equals(typePerte) && 
+                (numeroNouveauPasseport == null || numeroNouveauPasseport.isBlank())) {
+                model.addAttribute("erreur", "Nouveau numéro de passeport obligatoire.");
+                return "sprint2-form";
+            }
+            if (dateDelivrancePasseport != null && !dateDelivrancePasseport.isBlank()) {
+                dto.setDateDelivrancePasseport(java.sql.Date.valueOf(dateDelivrancePasseport));
+            }
+            if (dateExpirationPasseport != null && !dateExpirationPasseport.isBlank()) {
+                dto.setDateExpirationPasseport(java.sql.Date.valueOf(dateExpirationPasseport));
+            }
+            dto.setPaysDelivrancePasseport(paysDelivrancePasseport);
+            dto.setReferenceVisa(referenceVisa);
+            if (dateDebutVisa != null && !dateDebutVisa.isBlank()) {
+                dto.setDateDebutVisa(java.sql.Date.valueOf(dateDebutVisa));
+            }
+            if (dateFinVisa != null && !dateFinVisa.isBlank()) {
+                dto.setDateFinVisa(java.sql.Date.valueOf(dateFinVisa));
+            }
+
+            // CAS 1 : Personne EXISTANTE (idDemandeur ≠ null)
+            if (idDemandeur != null) {            dto.setNumeroNouveauPasseport(numeroNouveauPasseport);
+            if (dateDelivranceNouveauPasseport != null && !dateDelivranceNouveauPasseport.isBlank()) {
+                dto.setDateDelivranceNouveauPasseport(java.sql.Date.valueOf(dateDelivranceNouveauPasseport));
+            }
+            if (dateExpirationNouveauPasseport != null && !dateExpirationNouveauPasseport.isBlank()) {
+                dto.setDateExpirationNouveauPasseport(java.sql.Date.valueOf(dateExpirationNouveauPasseport));
+            }
+            dto.setPaysDelivranceNouveauPasseport(paysDelivranceNouveauPasseport);
+            dto.setIdCarteResident(idCarteResident);
+
+                // Appeler createDemandeSprint2() pour créer 1 seule demande
+                com.visa.transformable.model.Demande demande = demandeService.createDemandeSprint2(dto);
+                model.addAttribute("demande", demande);
+                model.addAttribute("typePerte", typePerte);
+                return "redirect:/sprint2-confirmation?demande=" + demande.getId();
+            }
+
+            // CAS 2 : Personne INCONNUE (idDemandeur = null)
+            // Sauvegarder en session et rediriger vers Step3
+            session.setAttribute("sprint2.dto", dto);
+            session.setAttribute("sprint2.typePerte", typePerte);
+            return "redirect:/step3-typeVisa";
+
+        } catch (IllegalArgumentException e) {
+            model.addAttribute("erreur", e.getMessage());
+            return "sprint2-form";
+        }
+    }
+
+    /**
+     * GET /sprint2-confirmation - Afficher la confirmation Sprint 2
+     */
+    @GetMapping("/sprint2-confirmation")
+    public String sprint2Confirmation(
+            @RequestParam(value = "demande", required = false) Long demandeId,
+            Model model) {
+        if (demandeId != null) {
+            var demande = demandeRepository.findById(demandeId).orElse(null);
+            if (demande != null) {
+                model.addAttribute("demande", demande);
+                model.addAttribute("typePerte", demande.getTypeDemande().getLibelle());
+            }
+        }
+        return "sprint2-confirmation";
+    }
 }
 

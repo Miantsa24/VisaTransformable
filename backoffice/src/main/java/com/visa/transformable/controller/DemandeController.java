@@ -1,6 +1,7 @@
 package com.visa.transformable.controller;
 
 import com.visa.transformable.dto.DemandeDTO;
+import com.visa.transformable.dto.DuplicataDTO;
 import com.visa.transformable.repository.DemandeRepository;
 import com.visa.transformable.repository.TypeDemandeRepository;
 import com.visa.transformable.service.DemandeService;
@@ -47,7 +48,46 @@ public class DemandeController {
 
     @PostMapping
     public String createDemande(@RequestParam(value = "documents", required = false) List<Long> documentsCoches,
-                                HttpSession session) {
+                                HttpSession session, Model model) {
+        // Détection Sprint 2 : personne inconnue (après Step3 + Step4)
+        if (session.getAttribute("sprint2.typePerte") != null) {
+            // C'est Sprint 2 personne INCONNUE
+            try {
+                String typePerte = (String) session.getAttribute("sprint2.typePerte");
+                com.visa.transformable.dto.DuplicataDTO sprint2Dto = 
+                    (com.visa.transformable.dto.DuplicataDTO) session.getAttribute("sprint2.dto");
+                
+                if (sprint2Dto == null) {
+                    return "redirect:/step1-type?error=" + encode("Données Sprint 2 manquantes en session.");
+                }
+                
+                // Appeler createTwoDemandes() pour créer 2 demandes liées
+                var demandes = demandeService.createTwoDemandes(sprint2Dto, documentsCoches, typePerte);
+                
+                // Nettoyer la session Sprint 2
+                session.removeAttribute("sprint2.dto");
+                session.removeAttribute("sprint2.typePerte");
+                
+                // Nettoyer aussi les attributs Sprint 1 si présents
+                session.removeAttribute("currentDemandeurId");
+                session.removeAttribute("currentPasseportId");
+                session.removeAttribute("currentVisaId");
+                session.removeAttribute("currentTypeDemandeId");
+                session.removeAttribute("currentTypeDemandeLibelle");
+                session.removeAttribute("currentTypeVisa");
+                session.removeAttribute("currentSelectedDocumentIds");
+                
+                // Passer les 2 demandes au modèle
+                model.addAttribute("demandes", demandes);
+                model.addAttribute("typePerte", typePerte);
+                return "sprint2-confirmation";
+            } catch (IllegalArgumentException e) {
+                model.addAttribute("error", e.getMessage());
+                return "redirect:/step4-documents?error=" + encode(e.getMessage());
+            }
+        }
+        
+        // Sinon : Sprint 1 classique
         Long idDemandeur = (Long) session.getAttribute("currentDemandeurId");
         Long idVisa = (Long) session.getAttribute("currentVisaId");
         Long idTypeDemande = (Long) session.getAttribute("currentTypeDemandeId");

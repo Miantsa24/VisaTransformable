@@ -113,12 +113,22 @@ public class Sprint2Controller {
     }
 
     @PostMapping
-    public String createDuplicata(@ModelAttribute DuplicataDTO dto, Model model) {
+    public String createDuplicata(@ModelAttribute DuplicataDTO dto, Model model, HttpSession session) {
         try {
-            var demande = demandeService.createDemandeSprint2(dto);
-            model.addAttribute("demande", demande);
-            model.addAttribute("typePerte", dto.getTypePerte());
-            return "sprint2-confirmation";
+            if (dto.getIdDemandeur() != null) {
+                // Cas 1 : Personne EXISTANTE (vient du prefill)
+                // Appeler createDemandeSprint2() pour créer 1 demande
+                var demande = demandeService.createDemandeSprint2(dto);
+                model.addAttribute("demande", demande);
+                model.addAttribute("typePerte", dto.getTypePerte());
+                return "sprint2-confirmation";
+            } else {
+                // Cas 2 : Personne INCONNUE (prefill = 404)
+                // Sauver en session et rediriger vers Step3 (réutiliser Sprint 1)
+                session.setAttribute("sprint2.dto", dto);
+                session.setAttribute("sprint2.typePerte", dto.getTypePerte());
+                return "redirect:/step3-typeVisa";
+            }
         } catch (IllegalArgumentException e) {
             model.addAttribute("error", e.getMessage());
             model.addAttribute("duplicata", dto);
