@@ -291,7 +291,6 @@ Afficher :
 * PR vers `main`
 
 ---
-
 ==============================================================================================
 ==============================================================================================
 
@@ -538,7 +537,258 @@ Créer ou compléter :
 
 ### 7. Commit & PR
 
-* PR vers `main`
+ * PR vers `main`
 
 ---
+
+==============================================================================================
+==============================================================================================
+
+# 📌 Tâches pour Sprint 3
+
+---
+
+## Rôles
+
+| Rôle | Nom |
+|---|---|
+| Team Lead | Alexandra ETU003306 |
+| Dev 1 (BackOffice : LOGIQUE MÉTIER + DB) | Malala ETU003211 |
+| Dev 2 (BackOffice : JSP + VALIDATION DOCUMENTAIRE) | Tojo ETU003362 |
+
+---
+
+## 🧠 TL (Team Lead)
+
+### 1. Validation métier
+
+| Point | Détail |
+|---|---|
+| Documents obligatoires/optionnels | Confirmer le caractère obligatoire ou optionnel de chaque document (communs + spécifiques) — point bloquant avant le dev |
+| Formats de fichiers | Confirmer que le format accepté pour les pièces justificatives est PDF uniquement, et confirmer la taille maximale par upload |
+| Rôle d'approbation | Confirmer quel rôle peut cliquer sur le bouton "Approuver" (tous les agents ou rôle spécifique ?) |
+| Statut demande_creee | Valider que le statut `demande_creee` est bien créé en base au clic sur "Enregistrer" dans `step4-documents.jsp` |
+| Statut visa_creé | Valider que le statut `visa_creé` est bien créé en base au clic sur "Approuver" dans `step5-confirmation.jsp` |
+
+### 2. Cohérence métier / DB
+
+| Point | Détail |
+|---|---|
+| Schéma Sprint 1 | Vérifier l'impact sur le schéma existant du Sprint 1 pour stocker les fichiers uploadés |
+| Liaison fichier | Vérifier que la colonne de stockage de fichier est bien liée à la table `demande_document` |
+| Contraintes | Vérifier la cohérence des FK, contraintes et unicité avec le nouveau flux |
+| Statut visa_creé | Ajouter le statut `visa_creé` dans la table `statut_demande` si non présent |
+
+```sql
+INSERT INTO statut_demande(libelle) VALUES ('visa_creé');
+```
+
+### 3. Suivi d'intégration
+
+| Point | Détail |
+|---|---|
+| Compatibilité | Vérifier la compatibilité avec les flux Sprint 1 et Sprint 2 |
+| Pages modifiées | S'assurer que la modification de `step4-documents.jsp` et `step5-confirmation.jsp` ne casse pas les statuts déjà en place |
+| Liste demandes | Vérifier que le menu "Liste demandes" affiche bien uniquement les demandes en `demande_creee` |
+| Liste visas | Vérifier que le menu "Liste visas" affiche bien uniquement les demandes en `visa_creé` |
+
+### 4. Tests métier
+
+| Cas | Résultat attendu |
+|---|---|
+| Document uploadé | Pièce automatiquement validée |
+| Pièce obligatoire manquante | Rejet au clic sur "Enregistrer", statut `demande_creee` non créé |
+| Toutes les pièces obligatoires uploadées | Statut `demande_creee` créé en base, redirection vers `step5-confirmation.jsp` |
+| Bouton "Approuver" | Visible uniquement quand statut = `demande_creee` |
+| Approbation finale | Statut `visa_creé` créé en base, redirection vers `success.jsp` |
+| success.jsp | Affiche bien le visa et la carte de résident délivrés |
+
+---
+
+## 👨‍💻 Dev 1 — BackOffice (LOGIQUE MÉTIER + DB)
+
+### 1. Création branche
+
+| Tâche | Détail |
+|---|---|
+| Branche | Créer la branche `feature/backoffice-sprint3-core` |
+
+### 2. Base de données
+
+| Tâche | Détail |
+|---|---|
+| Table demande_document | Étendre la table `demande_document` pour stocker le fichier uploadé par document |
+| Stockage fichier | Ajouter une colonne `fichier_path` ou `fichier_data` pour stocker le chemin ou le contenu du fichier |
+| Validation | Ajouter une colonne `est_valide` (boolean) sur `demande_document` pour suivre l'état de validation de chaque pièce |
+| Statut visa_creé | Ajouter le statut `visa_creé` dans la table `statut_demande` |
+
+```sql
+INSERT INTO statut_demande(libelle) VALUES ('visa_creé');
+```
+
+### 3. Mapping JPA
+
+| Entité | Modification |
+|---|---|
+| DemandeDocument | Ajouter `fichierPath` ou `fichierData` |
+| DemandeDocument | Ajouter `estValide` (boolean) |
+| Demande | Réutiliser sans modification |
+| Document | Réutiliser sans modification |
+| Demandeur | Réutiliser sans modification |
+
+### 4. Repository
+
+| Tâche | Détail |
+|---|---|
+| DemandeDocumentRepository | Récupérer les documents d'une demande avec leur état de validation |
+| DemandeDocumentRepository | Mettre à jour le statut de validation d'une pièce après upload |
+| Vérification | Ajouter une méthode pour vérifier si toutes les pièces obligatoires d'une demande sont validées |
+
+### 5. Service métier
+
+Créer ou étendre `DemandeService` avec les méthodes suivantes :
+
+```java
+uploadDocument(Long demandeId, Long documentId, MultipartFile fichier)
+```
+- Vérifier que le fichier uploadé est bien au format PDF avant de l'associer au document
+- Si le format n'est pas PDF → retourner une erreur métier explicite
+- Si le format est PDF → associer le fichier et passer estValide à true
+
+Associer le fichier uploadé au document de la demande et passer automatiquement `estValide` à `true`.
+
+```java
+validerDemandeDocuments(Long demandeId)
+```
+
+Vérifier que toutes les pièces obligatoires sont validées. Si oui → passer le statut de la demande à `demande_creee`. Si non → retourner une erreur métier explicite.
+
+```java
+approuverDemande(Long demandeId)
+```
+
+Vérifier que le statut de la demande est bien `demande_creee`. Si oui → passer le statut à `visa_creé`. Si non → retourner une erreur métier explicite.
+
+### 6. DTO
+
+| DTO | Champs |
+|---|---|
+| DocumentUploadDTO | `demandeId`, `documentId`, `fichier` (MultipartFile) |
+| DemandeDocumentStatusDTO | `documentId`, `libelle`, `estObligatoire`, `estValide`, `fichierPath` |
+
+### 7. Contrôleurs
+
+| Endpoint | Rôle |
+|---|---|
+| `@PostMapping("/backoffice/sprint3/documents/upload")` | Créer l'endpoint d'upload |
+| `@PostMapping("/backoffice/sprint3/documents/valider")` | Vérifier toutes les pièces et créer le statut `demande_creee` en base |
+| `@PostMapping("/backoffice/sprint3/demande/approuver")` | Créer le statut `visa_creé` en base |
+| `@GetMapping("/backoffice/sprint3/documents/{demandeId}")` | Récupérer les documents d'une demande |
+
+### 8. Tests
+
+| Cas | Résultat attendu |
+|---|---|
+| Upload d'un fichier | `estValide` passe à `true` pour la pièce correspondante |
+| Pièce obligatoire non uploadée | `validerDemandeDocuments` retourne une erreur, statut `demande_creee` non créé |
+| Toutes les pièces obligatoires uploadées | Statut `demande_creee` créé en base |
+| `approuverDemande` avec statut ≠ `demande_creee` | Erreur retournée |
+| `approuverDemande` avec statut = `demande_creee` | Statut `visa_creé` créé en base |
+
+### 9. Commit & PR
+
+| Tâche | Détail |
+|---|---|
+| PR | PR vers `main` |
+
+---
+
+## 👩‍💻 Dev 2 — BackOffice (JSP + VALIDATION DOCUMENTAIRE)
+
+### 1. Création branche
+
+| Tâche | Détail |
+|---|---|
+| Branche | Créer la branche `feature/backoffice-sprint3-ui` |
+
+### 2. Pages JSP à modifier
+
+| Page | Action |
+|---|---|
+| `step4-documents.jsp` | Modifier |
+| `step5-confirmation.jsp` | Modifier |
+| `success.jsp` | Créer |
+
+### 3. Modification de `step4-documents.jsp`
+
+| Point | Détail |
+|---|---|
+| Checkboxes | Remplacer toutes les cases à cocher (`<input type="checkbox">`) par des zones d'upload |
+| Input file | `html<input type="file" name="fichier_doc" data-document-id="${doc.id}" accept=".pdf">` |
+| Documents communs | Afficher les documents communs pour tous les profils |
+| Documents spécifiques | Afficher les documents spécifiques selon le type de visa sélectionné à l'étape 3 (Investisseur ou Travailleur) |
+| État visuel | Afficher `Uploadé ✅` / `Non uploadé ❌` |
+| Mise à jour état | Mettre à jour l'état visuel de chaque pièce immédiatement après l'upload |
+| Bouton Enregistrer | Si une pièce obligatoire manque → message d'erreur explicite, blocage de la progression |
+| Bouton Enregistrer | Si toutes les pièces obligatoires sont uploadées → appeler l'endpoint de validation, créer le statut `demande_creee` en base → rediriger vers `step5-confirmation.jsp` |
+
+### 4. Modification de `step5-confirmation.jsp`
+
+| Point | Détail |
+|---|---|
+| Affichage | Conserver l'affichage de la vérification finale des informations du demandeur (inchangé) |
+| Bouton | Remplacer "Soumettre demande" par "Approuver" |
+| Visibilité | Afficher le bouton "Approuver" uniquement si le statut de la demande est `demande_creee` |
+| Au clic | Appeler l'endpoint d'approbation |
+| Au clic | Créer le statut `visa_creé` en base |
+| Au clic | Rediriger vers `success.jsp` |
+
+### 5. Création de `success.jsp`
+
+| Point | Détail |
+|---|---|
+| Message | Afficher un message de succès après approbation |
+| Visa | Afficher les informations du visa délivré au demandeur |
+| Carte résident | Afficher la carte de résident délivrée selon le type de demande (Investisseur ou Travailleur) |
+| Navigation | Ajouter un lien ou bouton de retour vers la liste des demandes ou l'accueil |
+
+### 6. Menus et navigation
+
+| Menu / Bouton | Contenu |
+|---|---|
+| Liste demandes | Affiche toutes les demandes dont le statut est `demande_creee` |
+| Liste visas | Affiche toutes les demandes dont le statut est `visa_creé` |
+
+### 7. Gestion des erreurs
+
+| Cas | Action |
+|---|---|
+| Fichier obligatoire manquant | Afficher un message d'erreur si un fichier obligatoire est manquant dans `step4-documents.jsp` |
+| Statut incorrect | Afficher un message d'erreur si le bouton "Approuver" est cliqué alors que le statut n'est pas `demande_creee` |
+| Reprise upload | Permettre à l'agent de reprendre l'upload après une erreur sans perdre les fichiers déjà déposés |
+- Afficher un message d'erreur si le fichier uploadé n'est pas au format PDF
+
+### 8. Navigation wizard
+
+| Point | Détail |
+|---|---|
+| État | Conserver la gestion d'état entre les étapes via session ou hidden inputs (comme Sprint 1) |
+| Accessibilité | S'assurer que les données des étapes 1 à 3 sont toujours accessibles dans `step4-documents.jsp` et `step5-confirmation.jsp` |
+
+### 9. Contrôleur
+
+| Endpoint | Rôle |
+|---|---|
+| `@GetMapping("/backoffice/sprint3/documents")` | Créer ou compléter le contrôleur GET pour afficher la page documents |
+
+### 10. Commit & PR
+
+| Tâche | Détail |
+|---|---|
+| PR | PR vers `main` |
+
+
+
+==============================================================================================
+==============================================================================================
 
