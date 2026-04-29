@@ -9,6 +9,7 @@ public class DemandeDTO {
     private Long idVisa;
     private Long idTypeDemande;
     private Date dateDemande;
+    private Date dateModification;
     private String observations;
     // Liste des documents cochés (IDs)
     private List<Long> documentsCoches;
@@ -37,6 +38,7 @@ public class DemandeDTO {
     private String referenceVisa;
     private Date dateDebutVisa;
     private Date dateFinVisa;
+    private String typeVisa;
 
     public DemandeDTO() {}
 
@@ -51,6 +53,9 @@ public class DemandeDTO {
 
     public Date getDateDemande() { return dateDemande; }
     public void setDateDemande(Date dateDemande) { this.dateDemande = dateDemande; }
+
+    public Date getDateModification() { return dateModification; }
+    public void setDateModification(Date dateModification) { this.dateModification = dateModification; }
 
     public String getObservations() { return observations; }
     public void setObservations(String observations) { this.observations = observations; }
@@ -117,4 +122,7 @@ public class DemandeDTO {
 
     public Date getDateFinVisa() { return dateFinVisa; }
     public void setDateFinVisa(Date dateFinVisa) { this.dateFinVisa = dateFinVisa; }
+
+    public String getTypeVisa() { return typeVisa; }
+    public void setTypeVisa(String typeVisa) { this.typeVisa = typeVisa; }
 }
