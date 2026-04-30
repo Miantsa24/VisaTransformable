@@ -17,6 +17,7 @@ public class HistoStatutDemande {
     @JoinColumn(name = "id_statut_demande")
     private StatutDemande statutDemande;
 
+   
     @Column(name = "date_changement")
     private java.sql.Timestamp dateChangement;
 

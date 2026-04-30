@@ -28,12 +28,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <c:forEach var="d" items="${demandes}">
-                            <tr>
-                                <td style="padding:12px;border-bottom:1px solid #e2e8f0;">${d.id}</td>
-                                <td style="padding:12px;border-bottom:1px solid #e2e8f0;">${d.dateDemande}</td>
-                                <td style="padding:12px;border-bottom:1px solid #e2e8f0;">${d.demandeur.nom} ${d.demandeur.prenoms}</td>
-                                <td style="padding:12px;border-bottom:1px solid #e2e8f0;">${d.typeDemande.libelle}</td>
+@ -36,6 +37,10 @@
                                 <td style="padding:12px;border-bottom:1px solid #e2e8f0;">${d.visa.typeVisa.libelle}</td>
                                 <td style="padding:12px;border-bottom:1px solid #e2e8f0;">${d.visa.reference}</td>
                                 <td style="padding:12px;border-bottom:1px solid #e2e8f0;">${d.visa.passeport.numeroPasseport}</td>
@@ -44,9 +39,3 @@
                             </tr>
                         </c:forEach>
                     </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-</body>
-</html>

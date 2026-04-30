@@ -104,4 +104,9 @@ public class DemandeService {
             demandeDocumentRepository.save(dd);
         }
     }
+
+    public void updateDemande(Long id, DemandeDTO dto) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'updateDemande'");
+    }
 }
