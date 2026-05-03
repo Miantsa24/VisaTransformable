@@ -19,7 +19,7 @@ public class HistoStatutDemande {
 
    
     @Column(name = "date_changement")
-    private java.sql.Timestamp dateChangement;
+    private java.sql.Date dateChangement;
 
     @Column(columnDefinition = "TEXT")
     private String commentaire;
@@ -34,8 +34,8 @@ public class HistoStatutDemande {
     public StatutDemande getStatutDemande() { return statutDemande; }
     public void setStatutDemande(StatutDemande statutDemande) { this.statutDemande = statutDemande; }
 
-    public java.sql.Timestamp getDateChangement() { return dateChangement; }
-    public void setDateChangement(java.sql.Timestamp dateChangement) { this.dateChangement = dateChangement; }
+    public java.sql.Date getDateChangement() { return dateChangement; }
+    public void setDateChangement(java.sql.Date dateChangement) { this.dateChangement = dateChangement; }
 
     public String getCommentaire() { return commentaire; }
     public void setCommentaire(String commentaire) { this.commentaire = commentaire; }

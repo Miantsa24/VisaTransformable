@@ -13,6 +13,13 @@
             <h1 style="margin:0 0 12px 0;font-size:30px;color:#0f172a;">Liste des demandes</h1>
             <p style="margin:0 0 24px 0;color:#475569;line-height:1.6;">Toutes les demandes créées dans le système.</p>
 
+            <c:if test="${not empty success}">
+    <div style="margin-bottom:20px;padding:14px 16px;border-radius:10px;
+                background:#ecfdf5;color:#065f46;border:1px solid #6ee7b7;">
+        ${success}
+    </div>
+</c:if>
+
             <div style="overflow-x:auto;">
                 <table style="width:100%;border-collapse:collapse;">
                     <thead>
@@ -28,7 +35,12 @@
                         </tr>
                     </thead>
                     <tbody>
-@ -36,6 +37,10 @@
+                        <c:forEach items="${demandes}" var="d">
+                            <tr>
+                                <td style="padding:12px;border-bottom:1px solid #e2e8f0;">${d.id}</td>
+                                <td style="padding:12px;border-bottom:1px solid #e2e8f0;">${d.dateDemande}</td>
+                                <td style="padding:12px;border-bottom:1px solid #e2e8f0;">${d.demandeur.nom} ${d.demandeur.prenoms}</td>
+                                <td style="padding:12px;border-bottom:1px solid #e2e8f0;">${d.typeDemande.libelle}</td>
                                 <td style="padding:12px;border-bottom:1px solid #e2e8f0;">${d.visa.typeVisa.libelle}</td>
                                 <td style="padding:12px;border-bottom:1px solid #e2e8f0;">${d.visa.reference}</td>
                                 <td style="padding:12px;border-bottom:1px solid #e2e8f0;">${d.visa.passeport.numeroPasseport}</td>

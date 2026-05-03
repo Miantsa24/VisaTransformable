@@ -15,6 +15,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
 import jakarta.servlet.http.HttpSession;
 
 import com.visa.transformable.model.Document;
@@ -95,33 +97,43 @@ public class DemandeController {
         return "demande-edit";
     }
 
-    @PostMapping("/{id}/modifier")
-    public String modifierDemande(@PathVariable Long id, @ModelAttribute DemandeDTO dto, Model model) {
-        try {
-            demandeService.updateDemande(id, dto);
-            return "redirect:/backoffice/demande/liste";
-        } catch (IllegalArgumentException e) {
-            var demande = demandeRepository.findById(id)
-                    .orElseThrow(() -> new IllegalArgumentException("Demande introuvable"));
-            model.addAttribute("demande", demande);
-            model.addAttribute("documentsSelectionnes", new java.util.HashSet<>(demandeDocumentRepository.findByDemandeId(id).stream()
-                    .filter(dd -> Boolean.TRUE.equals(dd.getFourni()))
-                    .map(dd -> dd.getDocument().getId())
-                    .toList()));
-            model.addAttribute("docsCommuns", documentRepository.findByTypeCible(Document.TypeCible.commun));
-            model.addAttribute("docsInvestisseur", documentRepository.findByTypeCible(Document.TypeCible.investisseur));
-            model.addAttribute("docsTravailleur", documentRepository.findByTypeCible(Document.TypeCible.travailleur));
-            model.addAttribute("typeVisas", typeVisaRepository.findAll());
-            model.addAttribute("typeVisaCourant", demande.getVisa() != null && demande.getVisa().getTypeVisa() != null
-                    ? demande.getVisa().getTypeVisa().getLibelle()
-                    : null);
-            model.addAttribute("situationsFamiliales", situationFamilialeRepository.findAll());
-            model.addAttribute("nationalites", nationaliteRepository.findAll());
-            model.addAttribute("dateModification", dto.getDateModification() != null ? dto.getDateModification() : Date.valueOf(java.time.LocalDate.now()));
-            model.addAttribute("erreur", e.getMessage());
-            return "demande-edit";
-        }
+  @PostMapping("/{id}/modifier")
+public String modifierDemande(@PathVariable Long id,
+                              @ModelAttribute DemandeDTO dto,
+                              Model model,
+                              RedirectAttributes redirectAttributes) {
+    try {
+        demandeService.updateDemande(id, dto);
+
+        redirectAttributes.addFlashAttribute("success",
+                "Modification effectuée avec succès");
+
+        return "redirect:/backoffice/demande/liste";
+
+    } catch (IllegalArgumentException e) {
+
+        model.addAttribute("erreur", e.getMessage());
+
+        var demande = demandeRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Demande introuvable"));
+
+        model.addAttribute("demande", demande);
+        model.addAttribute("documentsSelectionnes",
+                new java.util.HashSet<>(demandeDocumentRepository.findByDemandeId(id).stream()
+                        .filter(dd -> Boolean.TRUE.equals(dd.getFourni()))
+                        .map(dd -> dd.getDocument().getId())
+                        .toList()));
+
+        model.addAttribute("docsCommuns", documentRepository.findByTypeCible(Document.TypeCible.commun));
+        model.addAttribute("docsInvestisseur", documentRepository.findByTypeCible(Document.TypeCible.investisseur));
+        model.addAttribute("docsTravailleur", documentRepository.findByTypeCible(Document.TypeCible.travailleur));
+        model.addAttribute("typeVisas", typeVisaRepository.findAll());
+        model.addAttribute("situationsFamiliales", situationFamilialeRepository.findAll());
+        model.addAttribute("nationalites", nationaliteRepository.findAll());
+
+        return "demande-edit";
     }
+}
 
     @GetMapping("/new")
     public String newDemande(HttpSession session) {

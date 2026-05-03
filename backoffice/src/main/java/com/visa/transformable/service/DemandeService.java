@@ -10,6 +10,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.sql.Date;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.Set;
 
 @Service
 public class DemandeService {
@@ -29,6 +31,14 @@ public class DemandeService {
     private StatutDemandeRepository statutDemandeRepository;
     @Autowired
     private TypeDemandeRepository typeDemandeRepository;
+    @Autowired
+    private TypeVisaRepository typeVisaRepository;
+    @Autowired
+    private NationaliteRepository nationaliteRepository;
+    @Autowired
+    private SituationFamilialeRepository situationFamilialeRepository;
+    @Autowired
+    private HistoStatutDemandeRepository histoStatutDemandeRepository;
 
     @Transactional
     public void createDemande(DemandeDTO dto) {
@@ -105,8 +115,104 @@ public class DemandeService {
         }
     }
 
-    public void updateDemande(Long id, DemandeDTO dto) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'updateDemande'");
+ @Transactional
+public void updateDemande(Long id, DemandeDTO dto) {
+
+    // 1. Récupération
+    Demande demande = demandeRepository.findById(id)
+            .orElseThrow(() -> new IllegalArgumentException("Demande introuvable"));
+
+    Demandeur demandeur = demande.getDemandeur();
+    Visa visa = demande.getVisa();
+    Passeport passeport = visa.getPasseport();
+
+    // =========================
+    // 2. UPDATE DEMANDEUR
+    // =========================
+    demandeur.setNom(dto.getNom());
+    demandeur.setPrenoms(dto.getPrenoms());
+    demandeur.setDateNaissance(dto.getDateNaissance());
+    demandeur.setLieuNaissance(dto.getLieuNaissance());
+    demandeur.setAdresse(dto.getAdresse());
+    demandeur.setEmail(dto.getEmail());
+    demandeur.setTelephone(dto.getTelephone());
+
+    if (dto.getIdNationalite() != null) {
+        Nationalite nat = nationaliteRepository.findById(dto.getIdNationalite())
+                .orElseThrow(() -> new IllegalArgumentException("Nationalité invalide"));
+        demandeur.setNationalite(nat);
     }
+
+    if (dto.getIdSituationFamiliale() != null) {
+        SituationFamiliale sf = situationFamilialeRepository.findById(dto.getIdSituationFamiliale())
+                .orElseThrow(() -> new IllegalArgumentException("Situation familiale invalide"));
+        demandeur.setSituationFamiliale(sf);
+    }
+
+    // =========================
+    // 3. UPDATE PASSEPORT
+    // =========================
+    passeport.setNumeroPasseport(dto.getNumeroPasseport());
+    passeport.setDateDelivrance(dto.getDateDelivrancePasseport());
+    passeport.setDateExpiration(dto.getDateExpirationPasseport());
+    passeport.setPaysDelivrance(dto.getPaysDelivrancePasseport());
+
+    // =========================
+    // 4. UPDATE VISA
+    // =========================
+    visa.setReference(dto.getReferenceVisa());
+    visa.setDateDebut(dto.getDateDebutVisa());
+    visa.setDateFin(dto.getDateFinVisa());
+
+    if (dto.getTypeVisa() != null && !dto.getTypeVisa().isBlank()) {
+        TypeVisa typeVisa = typeVisaRepository.findByLibelle(dto.getTypeVisa().toLowerCase())
+                .orElseThrow(() -> new IllegalArgumentException("Type de visa invalide"));
+        visa.setTypeVisa(typeVisa);
+    }
+
+    // =========================
+    // 5. UPDATE DOCUMENTS
+    // =========================
+    if (dto.getDocumentsCoches() != null) {
+
+        List<DemandeDocument> existants = demandeDocumentRepository.findByDemandeId(id);
+
+        Set<Long> dejaPresents = existants.stream()
+                .map(dd -> dd.getDocument().getId())
+                .collect(Collectors.toSet());
+
+        for (Long docId : dto.getDocumentsCoches()) {
+
+            // éviter doublons
+            if (dejaPresents.contains(docId)) continue;
+
+            Document doc = documentRepository.findById(docId)
+                    .orElseThrow(() -> new IllegalArgumentException("Document invalide"));
+
+            DemandeDocument dd = new DemandeDocument();
+            dd.setDemande(demande);
+            dd.setDocument(doc);
+            dd.setFourni(true);
+
+            demandeDocumentRepository.save(dd);
+        }
+    }
+
+    // =========================
+    // 6. HISTORIQUE (optionnel mais logique)
+    // =========================
+    if (dto.getDateModification() != null) {
+        HistoStatutDemande histo = new HistoStatutDemande();
+        histo.setDemande(demande);
+        histo.setDateChangement(dto.getDateModification());
+        histo.setStatutDemande(demande.getStatutDemande());
+
+        histoStatutDemandeRepository.save(histo);
+    }
+
+    // =========================
+    // 7. SAVE
+    // =========================
+    demandeRepository.save(demande);
+}
 }
