@@ -6,11 +6,11 @@
 <html>
 <head>
     <title>Historique de la demande</title>
-    <style>
+<style>
     body {
         margin: 0;
         font-family: "Inter", "Segoe UI", Arial, sans-serif;
-        background: #f1f5f9;
+        background: #f8fafc;
         color: #0f172a;
     }
 
@@ -18,130 +18,182 @@
         margin-left: 240px;
         padding: 40px;
         min-height: 100vh;
-        background: #f1f5f9;
+        background: #f8fafc;
     }
 
+    /* CONTAINER PRINCIPAL */
     .container {
         max-width: 1100px;
         margin: auto;
-        background: #ffffff;
         padding: 32px;
-        border-radius: 16px;
-        box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+        border-radius: 14px;
+        border: 1px solid #e2e8f0;
+        background: linear-gradient(to bottom, #ffffff, #fbfdff);
+        box-shadow: 0 8px 24px rgba(15, 23, 42, 0.04);
+
     }
 
+    /* TITRES */
     h1 {
-        font-size: 28px;
-        margin-bottom: 10px;
+        font-size: 26px;
+        margin-bottom: 6px;
         color: #0f172a;
+        font-weight: 700;
     }
 
     h2 {
-        margin-top: 35px;
-        font-size: 20px;
+        margin-top: 30px;
+        font-size: 18px;
+        font-weight: 700;
         color: #1e293b;
-        border-left: 4px solid #2563eb;
-        padding-left: 10px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    h2::before {
+        content: "";
+        width: 6px;
+        height: 18px;
+        background: #2563eb;
+        border-radius: 3px;
+        display: inline-block;
     }
 
     h3 {
-        font-size: 16px;
+        font-size: 15px;
         margin-bottom: 10px;
         color: #334155;
+        font-weight: 600;
     }
 
     p {
         color: #475569;
-        line-height: 1.6;
+        line-height: 1.5;
+        font-size: 14px;
     }
 
-    /* GRID CARDS */
+    /* INFO HEADER */
+    .info-box {
+        background: #f1f5f9;
+        border: 1px solid #e2e8f0;
+        padding: 14px 16px;
+        border-radius: 10px;
+        margin-top: 12px;
+        font-size: 14px;
+    }
+
+    /* GRID */
     .grid-3 {
         display: grid;
         grid-template-columns: repeat(3, 1fr);
-        gap: 20px;
-        margin-top: 20px;
+        margin-top: 18px;
+        gap: 22px;
+
     }
 
     .card {
-        background: #ffffff;
-        border: 1px solid #e2e8f0;
-        border-radius: 14px;
-        padding: 18px;
-        box-shadow: 0 4px 12px rgba(15, 23, 42, 0.05);
-        transition: transform 0.2s ease, box-shadow 0.2s ease;
-    }
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    padding: 18px;
+    position: relative;
+    transition: all 0.2s ease;
+    font-size: 14px;
+    color: #334155;
+}
 
-    .card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08);
-    }
+/* effet léger mais premium */
+.card:hover {
+    border-color: #cbd5e1;
+    transform: translateY(-2px);
+}
 
-    /* TABLE STYLE */
+/* TITRE DE CARD PLUS PROPRE */
+.card h3 {
+    margin: 0 0 12px 0;
+    font-size: 14px;
+    font-weight: 700;
+    color: #0f172a;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* petit accent visuel */
+.card h3::before {
+    content: "";
+    width: 8px;
+    height: 8px;
+    background: #2563eb;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+.card br {
+    line-height: 1.8;
+}
+
+    /* TABLEAUX PROPRES */
     table {
         width: 100%;
         border-collapse: collapse;
-        margin-top: 15px;
-        background: white;
-        border-radius: 12px;
+        margin-top: 12px;
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
         overflow: hidden;
-        box-shadow: 0 4px 12px rgba(15, 23, 42, 0.05);
+        font-size: 14px;
     }
 
     th {
-        background: #2563eb;
-        color: white;
+        background: #f1f5f9;
+        color: #334155;
         text-align: left;
         padding: 12px;
-        font-size: 14px;
+        font-weight: 600;
+        border-bottom: 1px solid #e2e8f0;
     }
 
     td {
         padding: 12px;
-        border-bottom: 1px solid #e2e8f0;
-        font-size: 14px;
-        color: #334155;
+        border-bottom: 1px solid #f1f5f9;
+        color: #475569;
     }
 
     tr:hover td {
         background: #f8fafc;
     }
 
-    /* LISTES DOCUMENTS */
+    /* LISTES */
     ul {
-        padding-left: 18px;
-        margin-top: 10px;
+        margin: 10px 0 0 18px;
+        padding: 0;
     }
 
     ul li {
-        padding: 6px 0;
+        padding: 5px 0;
         color: #334155;
+        font-size: 14px;
     }
 
-    /* HEADER INFO BOX */
-    .info-box {
-        background: #eff6ff;
-        border: 1px solid #dbeafe;
-        padding: 14px;
-        border-radius: 12px;
-        margin-top: 15px;
-    }
-
-    /* BACK BUTTON */
-    a {
+    /* LIGNE BAS */
+    .footer-link {
         display: inline-block;
-        margin-top: 20px;
-        padding: 10px 16px;
-        background: #e2e8f0;
-        color: #0f172a;
-        border-radius: 10px;
+        margin-top: 25px;
+        padding: 10px 14px;
+        background: #f1f5f9;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
         text-decoration: none;
+        color: #0f172a;
         font-weight: 600;
+        font-size: 14px;
         transition: 0.2s;
     }
 
-    a:hover {
-        background: #cbd5e1;
+    .footer-link:hover {
+        background: #e2e8f0;
     }
 
     /* RESPONSIVE */
@@ -193,31 +245,40 @@
         <!-- ETAT CIVIL -->
         <div class="card">
             <h3>Etat civil</h3>
-            Nom : ${demande.demandeur.nom}<br>
-            Prénoms : ${demande.demandeur.prenoms}<br>
-            Date de naissance : <fmt:formatDate value="${demande.demandeur.dateNaissance}" pattern="yyyy-MM-dd"/><br>
-            Lieu de naissance : ${demande.demandeur.lieuNaissance}<br>
-            Email : ${demande.demandeur.email}<br>
-            Téléphone : ${demande.demandeur.telephone}<br>
-            Situation familiale : ${demande.demandeur.situationFamiliale.libelle}<br>
-            Nationalité : ${demande.demandeur.nationalite.libelle}<br>
-            Adresse : ${demande.demandeur.adresse}<br>
+            <div style="margin-bottom:10px;color:#64748b;font-size:12px;">
+    Informations personnelles du demandeur
+</div>
+           <strong>Nom :</strong> ${demande.demandeur.nom}<br>
+            <strong>Prénoms :</strong> ${demande.demandeur.prenoms}<br>
+            <strong>Date de naissance :</strong> <fmt:formatDate value="${demande.demandeur.dateNaissance}" pattern="yyyy-MM-dd"/><br>
+            <strong>Lieu de naissance :</strong> ${demande.demandeur.lieuNaissance}<br>
+            <strong>Email :</strong> ${demande.demandeur.email}<br>
+            <strong>Téléphone :</strong> ${demande.demandeur.telephone}<br>
+            <strong>Situation familiale :</strong> ${demande.demandeur.situationFamiliale.libelle}<br>
+            <strong>Nationalité :</strong> ${demande.demandeur.nationalite.libelle}<br>
+            <strong>Adresse :</strong> ${demande.demandeur.adresse}<br>
         </div>
 
         <!-- PASSEPORT -->
         <div class="card">
             <h3>Passeport</h3>
-            Numéro : ${demande.visa.passeport.numeroPasseport}<br>
-            Délivrance : <fmt:formatDate value="${demande.visa.passeport.dateDelivrance}" pattern="yyyy-MM-dd"/><br>
-            Expiration : <fmt:formatDate value="${demande.visa.passeport.dateExpiration}" pattern="yyyy-MM-dd"/>
+            <div style="margin-bottom:10px;color:#64748b;font-size:12px;">
+    Informations personnelles du demandeur
+</div>
+            <strong>Numéro :</strong> ${demande.visa.passeport.numeroPasseport}<br>
+            <strong>Délivrance :</strong> <fmt:formatDate value="${demande.visa.passeport.dateDelivrance}" pattern="yyyy-MM-dd"/><br>
+            <strong>Expiration :</strong> <fmt:formatDate value="${demande.visa.passeport.dateExpiration}" pattern="yyyy-MM-dd"/>
         </div>
 
         <!-- VISA -->
         <div class="card">
             <h3>Visa</h3>
-            Référence : ${demande.visa.reference}<br>
-            Début : <fmt:formatDate value="${demande.visa.dateDebut}" pattern="yyyy-MM-dd"/><br>
-            Fin : <fmt:formatDate value="${demande.visa.dateFin}" pattern="yyyy-MM-dd"/>
+            <div style="margin-bottom:10px;color:#64748b;font-size:12px;">
+    Informations personnelles du demandeur
+</div>
+            <strong>Référence :</strong> ${demande.visa.reference}<br>
+            <strong>Début :</strong> <fmt:formatDate value="${demande.visa.dateDebut}" pattern="yyyy-MM-dd"/><br>
+            <strong>Fin :</strong> <fmt:formatDate value="${demande.visa.dateFin}" pattern="yyyy-MM-dd"/>
         </div>
 
     </div>
@@ -307,7 +368,7 @@
     </table>
 
     <br>
-    <a href="/backoffice/demande/liste">Retour</a>
+    <a class="footer-link" href="/backoffice/demande/liste">Retour</a>
 
 </div>
 </div>
