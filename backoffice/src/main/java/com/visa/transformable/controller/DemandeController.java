@@ -19,6 +19,8 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import jakarta.servlet.http.HttpSession;
 
+import com.visa.transformable.model.Demande;
+import com.visa.transformable.model.DemandeDocument;
 import com.visa.transformable.model.Document;
 import com.visa.transformable.repository.DemandeDocumentRepository;
 import com.visa.transformable.repository.DocumentRepository;
@@ -28,6 +30,10 @@ import com.visa.transformable.repository.PasseportRepository;
 import com.visa.transformable.repository.SituationFamilialeRepository;
 import com.visa.transformable.repository.TypeVisaRepository;
 import com.visa.transformable.repository.VisaRepository;
+import com.visa.transformable.repository.HistoriqueModificationRepository;
+import com.visa.transformable.model.HistoStatutDemande;
+import com.visa.transformable.model.Visa;
+
 
 @Controller
 @RequestMapping("/backoffice/demande")
@@ -54,6 +60,8 @@ public class DemandeController {
     private VisaRepository visaRepository;
     @Autowired
     private HistoStatutDemandeRepository histoStatutDemandeRepository;
+    @Autowired
+    private HistoriqueModificationRepository historiqueModificationRepository;
 
     @GetMapping("/liste")
     public String listeDemandes(Model model) {
@@ -62,13 +70,55 @@ public class DemandeController {
     }
 
 @GetMapping("/{id}/historique")
-    public String historiqueDemande(@PathVariable Long id, Model model) {
-        var demande = demandeRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Demande introuvable"));
-        model.addAttribute("demande", demande);
-        model.addAttribute("historiques", histoStatutDemandeRepository.findByDemandeIdOrderByDateChangementDesc(id));
-        return "demande-history";
-    }
+public String historiqueDemande(@PathVariable Long id, Model model) {
+
+    // =========================
+    // 1. DEMANDE
+    // =========================
+    Demande demande = demandeRepository.findById(id)
+            .orElseThrow(() -> new IllegalArgumentException("Demande introuvable"));
+
+    model.addAttribute("demande", demande);
+
+    // =========================
+    // 2. HISTORIQUE STATUT
+    // =========================
+    model.addAttribute("historiques",
+            histoStatutDemandeRepository.findByDemandeIdOrderByDateChangementDesc(id));
+
+    // =========================
+    // 3. HISTORIQUE MODIFICATIONS (NOUVEAU)
+    // =========================
+    model.addAttribute("modifications",
+            historiqueModificationRepository.findByDemandeIdOrderByDateModificationDesc(id));
+
+   // =========================
+// 4. DOCUMENTS COCHÉS
+// =========================
+List<DemandeDocument> docs = demandeDocumentRepository.findByDemandeId(id);
+
+List<DemandeDocument> documentsCommuns = docs.stream()
+        .filter(dd -> dd.getDocument().getTypeCible() == Document.TypeCible.commun)
+        .toList();
+
+List<DemandeDocument> documentsSpecifiques = docs.stream()
+        .filter(dd -> dd.getDocument().getTypeCible() != Document.TypeCible.commun)
+        .toList();
+
+model.addAttribute("documentsCommuns", documentsCommuns);
+model.addAttribute("documentsSpecifiques", documentsSpecifiques);
+
+    // =========================
+    // 5. TYPE VISA
+    // =========================
+    String typeVisa = demande.getVisa() != null && demande.getVisa().getTypeVisa() != null
+            ? demande.getVisa().getTypeVisa().getLibelle()
+            : "N/A";
+
+    model.addAttribute("typeVisaSelectionne", typeVisa);
+
+    return "demande-history";
+}
 
     @GetMapping("/{id}/modifier")
     public String modifierDemande(@PathVariable Long id, Model model) {

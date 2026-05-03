@@ -22,13 +22,6 @@
                 Modifiez les informations du demandeur, du passeport, du visa, du type de visa et ajoutez uniquement de nouvelles pièces justificatives.
             </p>
 
-            <div style="margin:0 0 20px 0;padding:18px;border:1px solid #dbeafe;border-radius:12px;background:#eff6ff;">
-                <label style="display:block;color:#0f172a;font-weight:600;">
-                    Date de modification*<br>
-                    <input type="date" name="dateModification" value="${dateModification}" required style="width:280px;max-width:100%;padding:10px 12px;border:1px solid #cbd5e1;border-radius:10px;box-sizing:border-box;">
-                </label>
-            </div>
-
             <c:if test="${not empty erreur}">
                 <div style="margin-bottom:20px;padding:14px 16px;border-radius:10px;background:#fef2f2;color:#b91c1c;border:1px solid #fecaca;">
                     ${erreur}
@@ -36,6 +29,12 @@
             </c:if>
 
             <form action="/backoffice/demande/${demande.id}/modifier" method="post">
+                <div style="margin:0 0 20px 0;padding:18px;border:1px solid #dbeafe;border-radius:12px;background:#eff6ff;">
+                <label style="display:block;color:#0f172a;font-weight:600;">
+                    Date de modification*<br>
+                    <input type="date" name="dateModification" value="${dateModification}" required style="width:280px;max-width:100%;padding:10px 12px;border:1px solid #cbd5e1;border-radius:10px;box-sizing:border-box;">
+                </label>
+            </div>
                 <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px;">
                     <fieldset style="border:1px solid #e2e8f0;border-radius:12px;padding:18px 18px 8px 18px;">
                         <legend style="padding:0 8px;font-weight:700;color:#0f172a;">État civil</legend>

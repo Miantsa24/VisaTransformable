@@ -162,3 +162,15 @@ CREATE TABLE demande_document (
     FOREIGN KEY (id_demande) REFERENCES demande(id) ON DELETE CASCADE,
     FOREIGN KEY (id_document) REFERENCES document(id)
 );
+
+CREATE TABLE historique_modification (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    id_demande INT NOT NULL,
+    section       VARCHAR(255),
+    champ         VARCHAR(255),
+    ancienne_valeur TEXT,
+    nouvelle_valeur TEXT,
+    date_modification TIMESTAMP,
+
+    FOREIGN KEY (id_demande) REFERENCES demande(id) ON DELETE CASCADE
+);
